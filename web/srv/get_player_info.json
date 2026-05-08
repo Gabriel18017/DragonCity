@@ -1,17 +1,6 @@
 {
   "timestamp": 0,
   "result": "success",
-  "neighbors": [
-    {
-      "fbid": 212156,
-      "visitCode": 212156,
-      "name": "Gabriel",
-      "pic": "",
-      "xp": 100,
-      "level": 1,
-      "world_id": 12901
-    }
-  ],
   "map": {
     "expansions": [
       62,
