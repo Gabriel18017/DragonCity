@@ -42,7 +42,6 @@ El servidor local (`Dragon City.py`) es funcional y permite cargar el juego.
 | Minijuego: Reflejo del Dragón | ✅ Funcional (recompensas activas) |
 | Minijuego: Memoria | ❌ Pendiente de reconstrucción |
 
-> 📸 *(Aquí va tu screenshot del juego corriendo — `docs/screenshot.png`)*
 
 ---
 
