@@ -7,7 +7,7 @@ original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
 [![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)]()
 [![Flask](https://img.shields.io/badge/Flask-Servidor_Local-lightgrey)]()
-[![Comandos](https://img.shields.io/badge/Comandos_Implementados-39%2F104-yellow)]()
+[![Comandos](https://img.shields.io/badge/Comandos_Implementados-30%2F104-yellow)]()
 
 ---
 
@@ -70,7 +70,7 @@ del juego de manera completa.
 ### 2. Iniciar el servidor
 
 - Ejecuta `Dragon City.exe`.
-- Abrí el navegador con Flash y navegá hasta `http://127.0.0.1:80`.
+- Abre el navegador con Flash y navegá hasta `http://127.0.0.1:80`.
 
 > ⚠️ **Nota:** Windows puede mostrar una advertencia de SmartScreen al ejecutar el archivo.
 > Haz clic en **"Más información" → "Ejecutar de todas formas"**. Esto es normal en ejecutables
