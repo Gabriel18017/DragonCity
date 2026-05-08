@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+    <title>Dragon City</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a1f1a;
+            color: #00ff9d;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(#0a1f1a, #1a3c2f);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffff00;
+            text-shadow: 4px 4px 0 #000;
+            font-size: 42px;
+            margin: 10px 0;
+        }
+
+        .info {
+            color: #aaffcc;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .dragon { font-size: 80px; margin: 20px 0; }
+
+        /* Challenge button */
+        #challengeWrapper {
+            text-align: center;
+            padding: 18px 10px 8px;
+        }
+
+        #challengeBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #001f14 0%, #003d26 50%, #001f14 100%);
+            border: 2px solid #00ff9d;
+            color: #00ff9d;
+            font-family: Georgia, serif;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 0 20px #00ff9d55, 0 0 44px #00ff9d22,
+                        inset 0 0 18px #00ff9d08;
+            text-shadow: 0 0 10px #00ff9d;
+            transition: all 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #challengeBtn:hover {
+            background: linear-gradient(135deg, #002d1c 0%, #005235 50%, #002d1c 100%);
+            box-shadow: 0 0 32px #00ff9d99, 0 0 64px #00ff9d33;
+            transform: scale(1.02);
+        }
+
+        #challengeBtn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="dragon">&#128009;</div>
+    <h1>DRAGON CITY</h1>
+    <p class="info" id="loadingText">Cargando perfil del jugador...</p>
+    <div style="margin-top:30px; font-size:18px; color:#88ffcc;">
+        Preparando tu aventura
+    </div>
+</div>
+
+<div id="flashContent" align="center" style="display:none;"></div>
+
+<div id="challengeWrapper" style="display:none;">
+    <button id="challengeBtn" onclick="openMinigames()">
+        &#128142; &nbsp;Participa en desaf&#237;os para obtener recompensas&nbsp; &#8250;
+    </button>
+</div>
+
+<script type="text/javascript">
+
+    function getUrlParam(param) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    var fb_sig_user = getUrlParam('fb_sig_user') || "645751329";
+    var player_name = getUrlParam('player_name')  || "DragonMaster";
+
+    document.getElementById('loadingText').innerHTML =
+        'Cargando perfil: <strong style="color:#ffff00;">' + player_name + '</strong><br>' +
+        '<small>fb_sig_user: ' + fb_sig_user.substring(0, 12) + '...</small>';
+
+    var flashVars = {
+        "swftoload":       "flash/Base_sec_0.6.7c.swf",
+        "use_assets_opt":  true,
+        "urlServicesBase": "http://static.socialpointgames.com/static/dragoncity/",
+        "fb_sig_user":     fb_sig_user,
+        "language":        "es",
+        "skiphash12341":   false,
+        "getText":         "",
+        "push_time":       "30",
+        "offer_type":      "0",
+        "fb_promo_uri":    "",
+        "spdebug":         "1"
+    };
+
+    function embedGame() {
+        swfobject.embedSWF(
+            "flash/DCLoader.swf",
+            "flashContent",
+            "1280", "638", "11.0.0", false,
+            flashVars,
+            {
+                allowScriptAccess: "always",
+                wmode:             "direct",
+                allowFullScreen:   "true",
+                bgcolor:           "#ffffff"
+            },
+            { id: "DCLoader", name: "DCLoader" }
+        );
+    }
+
+    window.onload = function() {
+        setTimeout(function() {
+            document.getElementById('loadingScreen').style.display  = 'none';
+            document.getElementById('flashContent').style.display   = 'block';
+            document.getElementById('challengeWrapper').style.display = 'block';
+            embedGame();
+        }, 1800);
+    };
+
+    function openMinigames() {
+        var url = '/minigames.html'
+                + '?fb_sig_user=' + encodeURIComponent(fb_sig_user)
+                + '&player_name=' + encodeURIComponent(player_name);
+
+        var popup = window.open(
+            url,
+            'dc_minigames',
+            'width=700,height=630,resizable=no,scrollbars=no,' +
+            'toolbar=no,menubar=no,location=no,status=no'
+        );
+
+        if (popup) { popup.focus(); }
+        else { alert('Permite ventanas emergentes para este sitio e intenta de nuevo.'); }
+    }
+
+    console.log('%c Dragon City cargado', 'color:#00ff9d;font-weight:bold');
+    console.log('   fb_sig_user ->', fb_sig_user);
+    console.log('   player_name ->', player_name);
+
+</script>
+</body>
+</html>

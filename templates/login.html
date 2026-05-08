@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dragon City - Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a1f1a;
+            color: #00ff9d;
+            font-family: "Arial", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            image-rendering: pixelated;
+        }
+
+        .container {
+            width: 520px;
+            background: linear-gradient(#1a3c2f, #0f2a22);
+            border: 4px solid #00cc77;
+            border-radius: 12px;
+            box-shadow: 0 0 30px #00ff9d;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header {
+            background: linear-gradient(to right, #00cc77, #008844);
+            padding: 15px;
+            margin: -20px -20px 25px -20px;
+            border-bottom: 4px solid #00ff9d;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #ffff00;
+            text-shadow: 3px 3px 0 #000;
+        }
+
+        .subtitle {
+            color: #aaffcc;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            color: #aaffcc;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #112822;
+            border: 3px solid #00cc77;
+            color: #00ff9d;
+            font-size: 18px;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #00cc77;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            margin: 10px 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 4px 0 #008844;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #008844;
+        }
+
+        .create-btn {
+            background: #ffaa00;
+            box-shadow: 0 4px 0 #cc8800;
+        }
+
+        .profile-list {
+            max-height: 280px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .profile-item {
+            background: #112822;
+            border: 3px solid #00aa66;
+            margin: 8px 0;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .profile-item:hover {
+            border-color: #00ff9d;
+            background: #1a3c2f;
+        }
+
+        .profile-item.selected {
+            border-color: #ffff00;
+            background: #1a3c2f;
+        }
+
+        .dragon-icon {
+            font-size: 40px;
+        }
+
+        /* ── Backup bar ── */
+        .backup-bar {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0 0 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            font-size: 13px;
+            padding: 8px 14px;
+            margin: 0;
+            box-shadow: 0 3px 0 #008844;
+        }
+
+        .btn-export { background: #1177cc; box-shadow: 0 3px 0 #0055aa; }
+        .btn-import { background: #775511; box-shadow: 0 3px 0 #553300; }
+
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            background: #00cc77;
+            color: #fff;
+            font-weight: bold;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            box-shadow: 0 4px 18px #000a;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.error { background: #cc3300; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🐉 DRAGON CITY</h1>
+        <div class="subtitle">Login</div>
+    </div>
+
+    <p style="font-size:20px; margin:15px 0;"><strong>¡Bienvenido, Domador de Dragones!</strong></p>
+    <p>Selecciona tu perfil o crea uno nuevo</p>
+
+    <div class="section">
+        <label>PERFILES GUARDADOS</label>
+        <div id="profile-list" class="profile-list">
+            <!-- Se llena con JavaScript -->
+        </div>
+    </div>
+
+    <button onclick="createNewUser()" class="create-btn">+ CREAR NUEVO USUARIO</button>
+
+    <button onclick="enterGame()" id="play-button" style="width:100%; margin-top:15px; font-size:22px;">
+        🐉 ENTRAR AL JUEGO →
+    </button>
+
+    <!-- Backup row -->
+    <div class="backup-bar">
+        <button class="btn-sm btn-export" onclick="exportJSON()">💾 Guardar perfiles (.json)</button>
+        <button class="btn-sm btn-import" onclick="document.getElementById('import-file').click()">📂 Cargar perfiles (.json)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>
+
+    <p style="margin-top:14px; font-size:12px; color:#88ffcc; line-height:1.5;">
+        Los perfiles también se guardan en el caché del navegador automáticamente.<br>
+        Usa <strong>Guardar</strong> para hacer una copia de seguridad en un archivo .json y <strong>Cargar</strong> para restaurarla.
+    </p>
+</div>
+
+<!-- Modal Crear Nuevo Usuario -->
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center;">
+    <div style="background:#1a3c2f; border:4px solid #00cc77; padding:25px; width:420px; border-radius:12px;">
+        <h2 style="color:#ffff00; margin-top:0;">✨ Nuevo Usuario</h2>
+        
+        <label>NOMBRE DEL JUGADOR</label>
+        <input id="player-name" type="text" placeholder="Ej: Carlos" style="width:100%; margin-bottom:15px;">
+
+        <div style="text-align:center; margin-top:20px;">
+            <button onclick="hideModal()" style="background:#555; padding:12px 25px;">CANCELAR</button>
+            <button onclick="saveNewUser()" style="background:#00cc77; padding:12px 30px;">CREAR PERFIL</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+    let profiles = [];
+    let selectedIndex = null;
+
+    // ── Toast helper ──────────────────────────────────────────────
+    function showToast(msg, isError = false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast' + (isError ? ' error' : '');
+        // Force reflow so the transition fires even on repeated calls
+        void t.offsetWidth;
+        t.classList.add('show');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ── localStorage helpers ──────────────────────────────────────
+    function generateFbSigUser() {
+        return Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
+    }
+
+    function loadProfiles() {
+        const saved = localStorage.getItem('dragoncity_profiles');
+        if (saved) profiles = JSON.parse(saved);
+    }
+
+    function saveProfiles() {
+        localStorage.setItem('dragoncity_profiles', JSON.stringify(profiles));
+    }
+
+    // ── JSON export ───────────────────────────────────────────────
+    window.exportJSON = async function () {
+        if (profiles.length === 0) {
+            showToast('No hay perfiles para guardar.', true);
+            return;
+        }
+        const jsonText = JSON.stringify(profiles, null, 2);
+
+        // 1️⃣ File System Access API (Chrome/Edge — abre diálogo "Guardar como")
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'dragoncity_perfiles.json',
+                    types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(jsonText);
+                await writable.close();
+                showToast('✅ Perfiles guardados correctamente');
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return; // usuario canceló el diálogo
+                // Si falla por otro motivo, caemos al siguiente método
+            }
+        }
+
+        // 2️⃣ Descarga por <a> (Firefox y otros)
+        try {
+            const blob = new Blob([jsonText], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'dragoncity_perfiles.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('✅ Descargando dragoncity_perfiles.json…');
+            return;
+        } catch (e) { /* sigue al fallback */ }
+
+        // 3️⃣ Fallback: mostrar el JSON en un modal para copiar y pegar
+        showJsonFallback(jsonText);
+    };
+
+    function showJsonFallback(text) {
+        let modal = document.getElementById('json-fallback-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'json-fallback-modal';
+            modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);justify-content:center;align-items:center;z-index:9998;';
+            modal.innerHTML = `
+                <div style="background:#1a3c2f;border:4px solid #00cc77;padding:25px;width:480px;border-radius:12px;">
+                    <h2 style="color:#ffff00;margin-top:0;">📋 Copia y guarda este JSON</h2>
+                    <p style="color:#aaffcc;font-size:13px;">Tu navegador bloqueó la descarga automática. Copia el texto de abajo, pégalo en un archivo de texto y guárdalo como <strong>dragoncity_perfiles.json</strong>.</p>
+                    <textarea id="json-fallback-text" readonly style="width:100%;height:180px;background:#112822;border:2px solid #00cc77;color:#00ff9d;font-size:12px;font-family:monospace;padding:8px;border-radius:6px;resize:none;box-sizing:border-box;"></textarea>
+                    <div style="text-align:center;margin-top:15px;display:flex;gap:10px;justify-content:center;">
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('json-fallback-text').value).then(()=>showToast('✅ Copiado al portapapeles'))" style="background:#1177cc;padding:10px 20px;font-size:14px;">📋 Copiar todo</button>
+                        <button onclick="document.getElementById('json-fallback-modal').style.display='none'" style="background:#555;padding:10px 20px;font-size:14px;">CERRAR</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+        document.getElementById('json-fallback-text').value = text;
+        modal.style.display = 'flex';
+    }
+
+    // ── JSON import ───────────────────────────────────────────────
+    window.importJSON = function (event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Basic validation
+                if (!Array.isArray(data)) throw new Error('Formato inválido');
+                data.forEach(p => {
+                    if (typeof p.name !== 'string' || typeof p.fb_sig_user !== 'string')
+                        throw new Error('Estructura de perfil inválida');
+                });
+
+                // Merge: add only profiles whose fb_sig_user doesn't already exist
+                let added = 0;
+                data.forEach(p => {
+                    if (!profiles.find(e => e.fb_sig_user === p.fb_sig_user)) {
+                        profiles.push(p);
+                        added++;
+                    }
+                });
+
+                saveProfiles();
+                selectedIndex = profiles.length > 0 ? 0 : null;
+                renderProfiles();
+                showToast(`✅ ${added} perfil(es) importado(s) correctamente`);
+            } catch (err) {
+                showToast('❌ Archivo inválido: ' + err.message, true);
+            }
+            // Reset so the same file can be re-imported if needed
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    };
+
+    // ── Render ────────────────────────────────────────────────────
+    function renderProfiles() {
+        const list = document.getElementById('profile-list');
+        list.innerHTML = '';
+
+        if (profiles.length === 0) {
+            list.innerHTML = `<p style="color:#88ffcc; text-align:center; padding:30px;">Aún no tienes perfiles<br><br>¡Crea tu primer usuario!</p>`;
+            document.getElementById('play-button').disabled = true;
+            return;
+        }
+
+        profiles.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = `profile-item ${i === selectedIndex ? 'selected' : ''}`;
+            div.innerHTML = `
+                <span class="dragon-icon">🐉</span>
+                <div style="flex:1; text-align:left;">
+                    <strong style="color:#ffff00;">${p.name}</strong><br>
+                    <small style="color:#aaffcc;">fb_sig_user: ${p.fb_sig_user.substring(0,10)}...</small>
+                </div>
+                ${i === selectedIndex ? '<span style="color:#ffff00; font-size:24px;">✓</span>' : ''}
+            `;
+            div.onclick = () => selectProfile(i);
+            list.appendChild(div);
+        });
+
+        document.getElementById('play-button').disabled = selectedIndex === null;
+    }
+
+    window.selectProfile = function(i) {
+        selectedIndex = i;
+        renderProfiles();
+    }
+
+    window.createNewUser = function() {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('player-name').focus();
+    }
+
+    window.hideModal = function() {
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('player-name').value = '';
+    }
+
+    window.saveNewUser = function() {
+        const name = document.getElementById('player-name').value.trim();
+        if (!name) {
+            alert("Por favor ingresa un nombre para el jugador");
+            return;
+        }
+
+        const fb_sig_user = generateFbSigUser();
+
+        profiles.push({ name: name, fb_sig_user: fb_sig_user });
+        saveProfiles();
+        hideModal();
+
+        selectedIndex = profiles.length - 1;
+        renderProfiles();
+    }
+
+    window.enterGame = function() {
+        if (selectedIndex === null) return;
+        
+        const profile = profiles[selectedIndex];
+        const gameUrl = `index.html?fb_sig_user=${profile.fb_sig_user}&player_name=${encodeURIComponent(profile.name)}`;
+        
+        window.location.href = gameUrl;
+    }
+
+    // Inicializar
+    window.onload = function() {
+        loadProfiles();
+        if (profiles.length > 0) selectedIndex = 0;
+        renderProfiles();
+    };
+</script>
+
+</body>
+</html>

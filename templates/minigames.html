@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon City — Desafíos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+        :root {
+            --bg:       #07181280;
+            --bg-solid: #071812;
+            --panel:    #0d2419;
+            --border:   #00cc77;
+            --neon:     #00ff9d;
+            --neon2:    #00e888;
+            --yellow:   #ffe94d;
+            --text:     #a8ffd0;
+            --dim:      #4a9970;
+            --fail:     #ff4455;
+            --warn:     #ffaa00;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-solid);
+            color: var(--neon);
+            font-family: 'Rajdhani', Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            /* Animated background grid */
+            background-image:
+                linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* ── HEADER ─────────────────────────────── */
+        header {
+            background: linear-gradient(180deg, #020f09 0%, #0a2018 100%);
+            border-bottom: 1px solid #00cc7744;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .dragon-icon { font-size: 32px; }
+
+        .header-title {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--yellow);
+            text-shadow: 0 0 18px #ffe94d88, 2px 2px 0 #000;
+            letter-spacing: 2px;
+        }
+
+        .header-sub {
+            font-size: 12px;
+            color: var(--dim);
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        .player-badge {
+            background: #00331a55;
+            border: 1px solid #00cc7744;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--text);
+            letter-spacing: 0.5px;
+        }
+
+        /* ── TABS ───────────────────────────────── */
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: #050f0a;
+            border-bottom: 1px solid #00cc7733;
+            padding: 0 24px;
+        }
+
+        .tab {
+            padding: 12px 22px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .tab:hover { color: var(--text); }
+
+        .tab.active {
+            color: var(--neon);
+            border-bottom-color: var(--neon);
+            text-shadow: 0 0 8px var(--neon);
+        }
+
+        .tab .badge {
+            background: #00ff9d22;
+            border: 1px solid #00ff9d44;
+            border-radius: 10px;
+            padding: 1px 7px;
+            font-size: 11px;
+            color: var(--neon);
+        }
+
+        .tab .badge.locked {
+            background: #ffffff10;
+            border-color: #ffffff20;
+            color: #ffffff33;
+        }
+
+        /* ── CONTENT ────────────────────────────── */
+        .content {
+            padding: 22px 28px;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        /* ── GAME CARD ──────────────────────────── */
+        .game-card {
+            background: linear-gradient(135deg, #0a2018 0%, #0d2a1e 60%, #091a12 100%);
+            border: 1px solid #00cc7744;
+            border-radius: 12px;
+            padding: 24px 26px;
+            position: relative;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            opacity: 0.4;
+        }
+
+        .game-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .game-title-block .game-name {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--yellow);
+            text-shadow: 0 0 14px #ffe94d55, 2px 2px 0 #000;
+            letter-spacing: 2px;
+        }
+
+        .game-title-block .game-desc {
+            font-size: 13px;
+            color: var(--dim);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Attempts panel */
+        .attempts-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #00000044;
+            border: 1px solid #00cc7722;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+        }
+
+        .att-label {
+            font-size: 12px;
+            color: var(--dim);
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .att-slots { display: flex; gap: 8px; }
+
+        .att-slot {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            border: 2px solid var(--neon);
+            background: radial-gradient(circle, #00ff9d44, #00220e00);
+            box-shadow: 0 0 8px var(--neon);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .att-slot.empty {
+            border-color: #00443333;
+            background: transparent;
+            box-shadow: none;
+            opacity: 0.25;
+        }
+
+        .refill-info {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .refill-label {
+            font-size: 11px;
+            color: var(--dim);
+        }
+
+        .refill-time {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--neon);
+            letter-spacing: 1px;
+        }
+
+        /* ── TRACK ──────────────────────────────── */
+        #trackInstruction {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 12px;
+            min-height: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        #trackWrapper {
+            position: relative;
+            width: 100%;
+            height: 60px;
+            border-radius: 30px;
+            overflow: hidden;
+            border: 2px solid #00cc7766;
+            cursor: pointer;
+            user-select: none;
+            background: linear-gradient(to right,
+                #3a0008   0%,   #3a0008  13%,
+                #4a2500  13%,   #4a2500  25%,
+                #1e4a00  25%,   #1e4a00  35%,
+                #006630  35%,   #006630  45%,
+                #00ff9d  45%,   #00ff9d  55%,
+                #006630  55%,   #006630  65%,
+                #1e4a00  65%,   #1e4a00  75%,
+                #4a2500  75%,   #4a2500  87%,
+                #3a0008  87%,   #3a0008 100%
+            );
+            box-shadow: 0 0 20px #00ff9d22, inset 0 2px 10px #00000099;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #trackWrapper.playing {
+            border-color: var(--neon);
+            box-shadow: 0 0 28px #00ff9d55;
+            cursor: crosshair;
+        }
+
+        #trackWrapper.stopped { cursor: default; }
+
+        #marker {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 5px;
+            background: #ffffff;
+            border-radius: 3px;
+            box-shadow: 0 0 16px white, 0 0 6px white;
+            transform: translateX(-50%);
+            pointer-events: none;
+            left: 0%;
+        }
+
+        #marker::after {
+            content: '▼';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 11px;
+            text-shadow: 0 0 6px white;
+        }
+
+        /* Zone labels */
+        .zone-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 4px 0;
+            font-size: 11px;
+            color: #33664455;
+            letter-spacing: 0.5px;
+        }
+
+        .zl-fail    { color: #883333aa; }
+        .zl-accept  { color: #887700aa; }
+        .zl-good    { color: #009944aa; }
+        .zl-perfect { color: #00ff9dcc; font-weight: 700; }
+
+        /* Speed bar */
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--dim);
+        }
+
+        .speed-pips { display: flex; gap: 5px; }
+
+        .speed-pip {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: #002a1a;
+            border: 1px solid #00331a;
+            transition: all 0.3s;
+        }
+
+        .speed-pip.active {
+            background: var(--neon);
+            box-shadow: 0 0 5px var(--neon);
+        }
+
+        /* ── START BUTTON ───────────────────────── */
+        #startBtn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 18px;
+            background: linear-gradient(135deg, #003322, #005533);
+            border: 2px solid var(--neon);
+            color: var(--neon);
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 0 18px #00ff9d33;
+            text-shadow: 0 0 10px var(--neon);
+            transition: all 0.2s;
+        }
+
+        #startBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #004433, #007744);
+            box-shadow: 0 0 30px #00ff9d66;
+            transform: translateY(-1px);
+        }
+
+        #startBtn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #00443355;
+            color: #00443355;
+            text-shadow: none;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* ── RESULT PANEL ───────────────────────── */
+        #resultPanel {
+            display: none;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 16px;
+            text-align: center;
+            animation: fadeUp 0.35s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-emoji { font-size: 38px; display: block; margin-bottom: 6px; }
+
+        .result-title {
+            font-family: 'Cinzel', serif;
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .result-gems {
+            font-size: 26px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .result-msg {
+            font-size: 12px;
+            opacity: 0.65;
+            margin-top: 6px;
+            color: var(--text);
+        }
+
+        .result-total {
+            font-size: 13px;
+            margin-top: 8px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ── NO ATTEMPTS PANEL ──────────────────── */
+        #noAttPanel {
+            display: none;
+            background: #11000022;
+            border: 1px solid #aa000044;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 16px;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .no-att-icon  { font-size: 32px; display: block; margin-bottom: 8px; }
+        .no-att-title { font-family:'Cinzel',serif; color:#ff8888; font-size:15px; margin-bottom:6px; }
+        .no-att-msg   { color: var(--text); font-size: 13px; opacity: 0.7; }
+
+        #countdownBig {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--neon);
+            letter-spacing: 3px;
+            margin-top: 8px;
+            text-shadow: 0 0 10px var(--neon);
+        }
+
+        /* ── COMING SOON CARDS ──────────────────── */
+        .coming-soon-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 4px;
+        }
+
+        .cs-card {
+            background: #0a1f1488;
+            border: 1px dashed #00cc7733;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            opacity: 0.55;
+        }
+
+        .cs-icon  { font-size: 28px; margin-bottom: 8px; }
+        .cs-name  { font-family:'Cinzel',serif; font-size:13px; color:var(--dim); letter-spacing:1px; }
+        .cs-label {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 10px;
+            background: #ffffff11;
+            border: 1px solid #ffffff22;
+            border-radius: 10px;
+            padding: 2px 10px;
+            color: #ffffff44;
+            letter-spacing: 1px;
+        }
+
+        /* scrollbar */
+        .content::-webkit-scrollbar { width: 4px; }
+        .content::-webkit-scrollbar-track { background: transparent; }
+        .content::-webkit-scrollbar-thumb { background: #00cc7744; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<!-- ══ HEADER ════════════════════════════════════════════ -->
+<header>
+    <div class="header-left">
+        <span class="dragon-icon">🐉</span>
+        <div>
+            <div class="header-title">DESAFÍOS</div>
+            <div class="header-sub">DRAGON CITY</div>
+        </div>
+    </div>
+    <div class="player-badge" id="playerBadge">Cargando...</div>
+</header>
+
+<!-- ══ TABS ══════════════════════════════════════════════ -->
+<div class="tabs">
+    <div class="tab active" onclick="showTab('reflejo')">
+        ⚡ REFLEJO DEL DRAGÓN <span class="badge">3/día</span>
+    </div>
+    <div class="tab" onclick="showTab('memoria')">
+        🧠 MEMORIA <span class="badge locked">Próximo</span>
+    </div>
+    <div class="tab" onclick="showTab('tesoro')">
+        ⚡ TESORO <span class="badge locked">Próximo</span>
+    </div>
+</div>
+
+<!-- ══ CONTENT ════════════════════════════════════════════ -->
+<div class="content">
+
+    <!-- ── Tab: Reflejo del Dragón ────────────── -->
+    <div id="tab-reflejo">
+        <div class="game-card">
+
+            <div class="game-header">
+                <div class="game-title-block">
+                    <div class="game-name">⚡ REFLEJO DEL DRAGÓN</div>
+                    <div class="game-desc">Detén el marcador en la zona correcta para ganar gemas</div>
+                </div>
+            </div>
+
+            <!-- Attempts -->
+            <div class="attempts-panel">
+                <span class="att-label">INTENTOS HOY</span>
+                <div class="att-slots">
+                    <div class="att-slot" id="slot0">💎</div>
+                    <div class="att-slot" id="slot1">💎</div>
+                    <div class="att-slot" id="slot2">💎</div>
+                </div>
+                <div class="refill-info">
+                    <div class="refill-label">PRÓXIMO INTENTO</div>
+                    <div class="refill-time" id="refillTime">—</div>
+                </div>
+            </div>
+
+            <!-- Track -->
+            <div id="trackInstruction">
+                Pulsa <strong style="color:#00ff9d">INICIAR DESAFÍO</strong> para comenzar
+            </div>
+
+            <div id="trackWrapper" onclick="stopMarker()">
+                <div id="marker"></div>
+            </div>
+
+            <div class="zone-labels">
+                <span class="zl-fail">FALLO</span>
+                <span class="zl-accept">×1💎</span>
+                <span class="zl-good">×2💎</span>
+                <span class="zl-perfect">★ PERFECTO ★</span>
+                <span class="zl-good">×2💎</span>
+                <span class="zl-accept">×1💎</span>
+                <span class="zl-fail">FALLO</span>
+            </div>
+
+            <div class="speed-row">
+                <span>VELOCIDAD:</span>
+                <div class="speed-pips">
+                    <div class="speed-pip" id="pip0"></div>
+                    <div class="speed-pip" id="pip1"></div>
+                    <div class="speed-pip" id="pip2"></div>
+                </div>
+            </div>
+
+            <!-- Start button -->
+            <button id="startBtn" onclick="startGame()">⚡ INICIAR DESAFÍO</button>
+
+            <!-- Result -->
+            <div id="resultPanel"></div>
+
+            <!-- No attempts -->
+            <div id="noAttPanel">
+                <span class="no-att-icon">⏳</span>
+                <div class="no-att-title">SIN INTENTOS DISPONIBLES</div>
+                <div class="no-att-msg">Próximo intento en:</div>
+                <div id="countdownBig">--:--:--</div>
+            </div>
+
+        </div>
+
+        <!-- Coming soon cards -->
+        <div class="coming-soon-grid" style="margin-top:16px;">
+            <div class="cs-card">
+                <div class="cs-icon">🧠</div>
+                <div class="cs-name">MEMORIA DEL HUEVO</div>
+                <div class="cs-label">PRÓXIMAMENTE</div>
+            </div>
+            <div class="cs-card">
+                <div class="cs-icon">⚡</div>
+                <div class="cs-name">CAZA DEL TESORO</div>
+                <div class="cs-label">PRÓXIMAMENTE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab: Memoria (placeholder) ────────── -->
+    <div id="tab-memoria" style="display:none; text-align:center; padding:40px; color:var(--dim);">
+        <div style="font-size:48px; margin-bottom:16px;">🧠</div>
+        <div style="font-family:'Cinzel',serif; font-size:18px; color:var(--yellow); margin-bottom:8px;">MEMORIA DEL HUEVO</div>
+        <div style="font-size:14px;">Este desafío estará disponible pronto.</div>
+    </div>
+
+    <!-- ── Tab: Tesoro (placeholder) ─────────── -->
+    <div id="tab-tesoro" style="display:none; text-align:center; padding:40px; color:var(--dim);">
+        <div style="font-size:48px; margin-bottom:16px;">⚡</div>
+        <div style="font-family:'Cinzel',serif; font-size:18px; color:var(--yellow); margin-bottom:8px;">CAZA DEL TESORO</div>
+        <div style="font-size:14px;">Este desafío estará disponible pronto.</div>
+    </div>
+
+</div><!-- /content -->
+
+
+<!-- ══ SCRIPT ════════════════════════════════════════════ -->
+<script>
+
+    /* ── URL params ─────────────────────────── */
+    var params      = new URLSearchParams(window.location.search);
+    var fb_sig_user = params.get('fb_sig_user') || '645751329';
+    var player_name = params.get('player_name')  || 'DragonMaster';
+
+    document.getElementById('playerBadge').textContent = '👤 ' + player_name;
+
+    /* ── Constants ──────────────────────────── */
+    var STORAGE_KEY  = 'dc_reflejo_v1_' + fb_sig_user; // per-user key
+    var MAX_ATTEMPTS = 3;
+    var COOLDOWN     = 86400; // seconds
+    var SPEEDS       = [0.55, 0.80, 1.10];
+
+    /* ── State ──────────────────────────────── */
+    var gamePhase    = 'idle';
+    var markerPos    = 50;
+    var markerDir    = 1;
+    var animFrame    = null;
+    var currentSpeed = SPEEDS[0];
+    var tickTimer    = null;
+
+    /* ── Attempt storage ─────────────────────── */
+    function loadData() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { used_at: [] }; }
+        catch(e) { return { used_at: [] }; }
+    }
+
+    function saveData(d) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    }
+
+    function now() { return Math.floor(Date.now() / 1000); }
+
+    function getStatus() {
+        var n      = now();
+        var recent = (loadData().used_at || [])
+                     .filter(function(ts){ return n - ts < COOLDOWN; })
+                     .sort(function(a,b){ return a - b; });
+        return {
+            available:   MAX_ATTEMPTS - recent.length,
+            recent:      recent,
+            nextRefillAt: recent.length ? recent[0] + COOLDOWN : null
+        };
+    }
+
+    function recordUsed() {
+        var n      = now();
+        var recent = (loadData().used_at || [])
+                     .filter(function(ts){ return n - ts < COOLDOWN; });
+        recent.push(n);
+        saveData({ used_at: recent });
+    }
+
+    /* ── Zone logic ─────────────────────────── */
+    function getZone(pos) {
+        var dist = Math.abs(pos - 50);
+        if (dist <=  5) return { level:'perfect', gems:3, label:'¡PERFECTO!',     color:'#00ff9d', emoji:'🌟' };
+        if (dist <= 15) return { level:'good',    gems:2, label:'¡BIEN HECHO!',   color:'#00cc55', emoji:'💚' };
+        if (dist <= 25) return { level:'accept',  gems:1, label:'ACEPTABLE',      color:'#ccaa00', emoji:'✅' };
+        return               { level:'fail',    gems:0, label:'¡FALLASTE!',    color:'#ff4455', emoji:'❌' };
+    }
+
+    /* ── UI update ──────────────────────────── */
+    function updateUI() {
+        var s = getStatus();
+        for (var i = 0; i < 3; i++) {
+            var sl = document.getElementById('slot' + i);
+            if (i < s.available) {
+                sl.className   = 'att-slot';
+                sl.textContent = '💎';
+            } else {
+                sl.className   = 'att-slot empty';
+                sl.textContent = '○';
+            }
+        }
+        // speed pips
+        var used = MAX_ATTEMPTS - s.available;
+        var sidx = Math.min(used, SPEEDS.length - 1);
+        currentSpeed = SPEEDS[sidx];
+        for (var j = 0; j < 3; j++) {
+            document.getElementById('pip' + j).className =
+                'speed-pip' + (j <= sidx ? ' active' : '');
+        }
+        // refill
+        updateRefill(s.nextRefillAt);
+        // start button
+        document.getElementById('startBtn').disabled = (s.available <= 0);
+    }
+
+    function updateRefill(nextAt) {
+        var el   = document.getElementById('refillTime');
+        var cdb  = document.getElementById('countdownBig');
+        if (!nextAt) { el.textContent = '—'; if(cdb) cdb.textContent = '--:--:--'; return; }
+        var secs = Math.max(0, nextAt - now());
+        var h = Math.floor(secs / 3600);
+        var m = Math.floor((secs % 3600) / 60);
+        var s = secs % 60;
+        var str = pad(h) + ':' + pad(m) + ':' + pad(s);
+        el.textContent = secs > 0 ? str : '¡Recargando!';
+        if (cdb) cdb.textContent = str;
+    }
+
+    function pad(n){ return String(n).padStart(2,'0'); }
+
+    function setInstruction(html) {
+        document.getElementById('trackInstruction').innerHTML = html;
+    }
+
+    function setMarker(pct) {
+        document.getElementById('marker').style.left = pct + '%';
+    }
+
+    /* ── Game loop ──────────────────────────── */
+    function loop() {
+        markerPos += markerDir * currentSpeed;
+        if (markerPos >= 100) { markerPos = 100; markerDir = -1; }
+        if (markerPos <=   0) { markerPos =   0; markerDir =  1; }
+        setMarker(markerPos);
+        animFrame = requestAnimationFrame(loop);
+    }
+
+    /* ── Start ──────────────────────────────── */
+    function startGame() {
+        if (getStatus().available <= 0) { showNoAtt(); return; }
+
+        document.getElementById('resultPanel').style.display = 'none';
+        document.getElementById('noAttPanel').style.display  = 'none';
+        document.getElementById('trackWrapper').className = 'playing';
+        document.getElementById('startBtn').disabled = true;
+
+        gamePhase  = 'playing';
+        markerPos  = 0;
+        markerDir  = 1;
+
+        setInstruction('Haz <strong style="color:#00ff9d">clic en la barra</strong> (o presiona <strong style="color:#00ff9d">ESPACIO</strong>) para detener el marcador');
+
+        if (animFrame) cancelAnimationFrame(animFrame);
+        loop();
+    }
+
+    /* ── Stop ───────────────────────────────── */
+    function stopMarker() {
+        if (gamePhase !== 'playing') return;
+        cancelAnimationFrame(animFrame);
+        animFrame = null;
+        gamePhase = 'stopped';
+
+        document.getElementById('trackWrapper').className = 'stopped';
+
+        var zone = getZone(markerPos);
+        recordUsed();
+        updateUI();
+
+        if (zone.gems > 0) {
+            claimGems(zone.gems, zone);
+        } else {
+            showResult(zone, 0, null);
+        }
+
+        var s = getStatus();
+        document.getElementById('startBtn').disabled = (s.available <= 0);
+        if (s.available <= 0) showNoAtt();
+    }
+
+    /* ── Claim gems ─────────────────────────── */
+    function claimGems(gems, zone) {
+        fetch('/minigame/reward', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ user_id: fb_sig_user, gems: gems })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            showResult(zone, gems, d.status === 'ok' ? d.new_cash : null);
+        })
+        .catch(function(){
+            showResult(zone, gems, null);
+        });
+    }
+
+    /* ── Show result ─────────────────────────── */
+    function showResult(zone, gems, newTotal) {
+        var p   = document.getElementById('resultPanel');
+        var bg  = { perfect:'#00ff9d12', good:'#00aa4412', accept:'#aaaa0012', fail:'#aa000012' }[zone.level];
+        var bd  = { perfect:'#00ff9d55', good:'#00aa4455', accept:'#aaaa0055', fail:'#aa000055' }[zone.level];
+
+        p.style.cssText = 'display:block; border-radius:10px; padding:18px 20px; margin-top:16px; text-align:center; animation:fadeUp 0.35s ease;'
+                        + 'background:' + bg + '; border:1px solid ' + bd + ';';
+
+        var html = '<span class="result-emoji">' + zone.emoji + '</span>'
+                 + '<div class="result-title" style="color:' + zone.color + '">' + zone.label + '</div>';
+
+        if (gems > 0) {
+            html += '<div class="result-gems" style="color:' + zone.color + '">+' + gems + ' 💎 gema' + (gems > 1 ? 's' : '') + '</div>';
+            html += '<div class="result-msg">Las gemas han sido añadidas a tu cuenta.</div>';
+            if (newTotal !== null) {
+                html += '<div class="result-total">💰 Total de gemas: ' + newTotal + '</div>';
+            }
+        } else {
+            html += '<div class="result-msg" style="font-size:14px; opacity:0.8;">El marcador estaba fuera de zona. Inténtalo de nuevo.</div>';
+        }
+
+        p.innerHTML = html;
+        setInstruction('');
+    }
+
+    /* ── No attempts ─────────────────────────── */
+    function showNoAtt() {
+        document.getElementById('noAttPanel').style.display = 'block';
+        startTick();
+    }
+
+    /* ── Tick (live countdown + auto-refill) ─── */
+    function startTick() {
+        if (tickTimer) clearInterval(tickTimer);
+        tickTimer = setInterval(function() {
+            var s = getStatus();
+            updateRefill(s.nextRefillAt);
+            if (s.available > 0) {
+                clearInterval(tickTimer);
+                document.getElementById('noAttPanel').style.display = 'none';
+                document.getElementById('startBtn').disabled = false;
+                updateUI();
+                setInstruction('¡Intento restaurado! Pulsa <strong style="color:#00ff9d">INICIAR DESAFÍO</strong>');
+            }
+        }, 1000);
+    }
+
+    /* ── Tabs ───────────────────────────────── */
+    function showTab(name) {
+        var tabs = ['reflejo','memoria','tesoro'];
+        tabs.forEach(function(t) {
+            document.getElementById('tab-' + t).style.display = (t === name) ? '' : 'none';
+        });
+        document.querySelectorAll('.tab').forEach(function(el, i) {
+            el.className = 'tab' + (tabs[i] === name ? ' active' : '');
+        });
+    }
+
+    /* ── Space bar ──────────────────────────── */
+    document.addEventListener('keydown', function(e) {
+        if (e.code === 'Space') { e.preventDefault(); stopMarker(); }
+    });
+
+    /* ── Init ───────────────────────────────── */
+    updateUI();
+    startTick();
+
+</script>
+</body>
+</html>
