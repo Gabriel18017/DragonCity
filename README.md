@@ -88,8 +88,7 @@ del juego de manera completa.
 ## 💾 Guardado
 
 El progreso se guarda localmente en archivos `.json` dentro de la carpeta `web/srv/`
-y en el caché del navegador. Usa los botones **Exportar / Importar** en `login.html`
-para hacer copias de seguridad de tus usuarios.
+Cuando crees un usuario, usá los botones Exportar / Importar que están en login.html para hacer copias de seguridad de tus usuarios (esto respalda los usuarios creados, no las partidas).
 
 ---
 
