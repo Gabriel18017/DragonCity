@@ -33,14 +33,23 @@ puedes contactarme antes de tomar cualquier acción formal.
 
 ## 🛠️ Estado del Desarrollo
 
-El servidor local (`Dragon City.py`) es funcional y permite cargar el juego.
+El servidor local es funcional y permite cargar el juego.
 
 | Módulo | Estado |
 |---|---|
 | Motor de Cría | ✅ Funcional |
 | Comandos (`packets.php`) | ⚠️ 30 / 104 implementados |
-| Minijuego: Reflejo del Dragón | ✅ Funcional (recompensas activas) |
-| Minijuego: Memoria | ❌ Pendiente de reconstrucción |
+| Minijuego: Reflejo del Dragón | ✅ Funcional |
+| Minijuego: Memoria | ❌ En desarrollo |
+| Minijuego: Tesoro | ❌ En desarrollo |
+
+### 🎮 Sobre los Minijuegos
+
+Los minijuegos incluidos en este proyecto **no forman parte del Dragon City original**.
+Son creaciones propias desarrolladas para suplir una limitación técnica del entorno local:
+dado que el sistema de compra de gemas no puede funcionar sin los servidores oficiales,
+estos minijuegos ofrecen al jugador una forma alternativa de obtenerlas y disfrutar
+del juego de manera completa.
 
 
 ---
@@ -50,6 +59,8 @@ El servidor local (`Dragon City.py`) es funcional y permite cargar el juego.
 ### Requisitos
 
 - Un navegador compatible con Flash Player
+  - ⚡ **Recomendado:** [FlashBrowser](https://github.com/radubirsan/FlashBrowser/releases/latest)
+  - 🌕 Alternativa: [Pale Moon](https://www.palemoon.org/)
 
 ### 1. Descargar el servidor
 
@@ -69,9 +80,6 @@ El servidor local (`Dragon City.py`) es funcional y permite cargar el juego.
 
 ## 🎮 Cómo Jugar
 
-- Descarga un navegador compatible con Flash Player.
-  - ⚡ **Recomendado:** [FlashBrowser](https://github.com/radubirsan/FlashBrowser/releases/latest)
-  - 🌕 Alternativa: [Pale Moon](https://www.palemoon.org/)
 - Abre el navegador y navega a `http://127.0.0.1:80`.
 - Crea un perfil en la pantalla de inicio y disfruta.
 
