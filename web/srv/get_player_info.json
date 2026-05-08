@@ -1,4 +1,6 @@
 {
+  "timestamp": 0,
+  "result": "success",
   "map": {
     "expansions": [
       62,
@@ -1366,7 +1368,6 @@
     "dragonariumSlot": [],
     "timeStampMondayBonus": 0,
     "timestampLastBonus": 0,
-    "showedNewsTimestamp": [],
     "collectGame": 0,
     "kompuSpells": 0,
     "kompuLastTimeStamp": 0,
@@ -1382,14 +1383,10 @@
     "teams": {},
     "quality": 1,
     "xmasPresentReceived": 0,
-    "deusCardsLastGenerated": 0,
-    "deusCardsLastTimestamp": 0,
     "casinoSpins": 0,
     "casinoSpinCounter": 0,
     "casinoPrizeCounter": 0,
     "deusVault": [],
-    "ownedDragons": [],
-    "result": "ok",
-    "timestamp": 0
+    "ownedDragons": []
   }
 }
