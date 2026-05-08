@@ -1,6 +1,17 @@
 {
   "timestamp": 0,
   "result": "success",
+  "neighbors": [
+    {
+      "fbid": 212156,
+      "visitCode": 212156,
+      "name": "Gabriel",
+      "pic": "",
+      "xp": 100,
+      "level": 1,
+      "world_id": 12901
+    }
+  ],
   "map": {
     "expansions": [
       62,
@@ -11,6 +22,7 @@
       74
     ],
     "increasedPopulation": 0,
+    "store": {},
     "items": {
       "0": [
         1,
@@ -18,7 +30,7 @@
         72,
         0,
         0,
-        0
+        1
       ],
       "1": [
         50,
@@ -276,7 +288,7 @@
         0,
         1
       ],
-	  "33": [
+      "33": [
         77,
         15,
         26,
@@ -1341,10 +1353,11 @@
     "seasonOfferHelp": 0,
     "seasonOfferReceived": 0,
     "universAttackWin": [],
+    "workBuildingsInfo": [],
+    "work": {},
     "eggs": [],
     "dragons": []
   },
-  "neighbors": [],
   "playerInfo": {
     "pid": "",
     "name": "",
@@ -1360,6 +1373,9 @@
     "completed_tutorial": 0
   },
   "privateState": {
+	"showedNewsTimestamp": [
+      0
+    ],
     "attacksSent": [],
     "goals": [],
     "lastUpgrades": [],
