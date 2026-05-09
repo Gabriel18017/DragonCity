@@ -12,6 +12,54 @@ import random
 
 app = Flask(__name__)
 
+HOSTS_PATH = r"C:\Windows\System32\drivers\etc\hosts"
+
+HOSTS_ENTRIES = [
+    "127.0.0.1 static.socialpointgames.com",
+    "127.0.0.1 ajax.googleapis.com",
+    "127.0.0.1 api.omniata.com",
+    "127.0.0.1 sp-translations.socialpointgames.com",
+]
+
+MARKER = "# --- Dragon City Flash ---"
+
+def add_hosts():
+    with open(HOSTS_PATH, 'r', encoding='utf-8') as f:
+        contenido = f.read()
+    
+    if MARKER in contenido:
+        print("[+] Las entradas del hosts ya están activas.")
+        return
+
+    with open(HOSTS_PATH, 'a', encoding='utf-8') as f:
+        f.write(f"\n{MARKER}\n")
+        for entry in HOSTS_ENTRIES:
+            f.write(f"{entry}\n")
+        f.write(f"{MARKER}\n")
+    
+    print("[+] Entradas añadidas al hosts correctamente.")
+
+def remove_hosts():
+    with open(HOSTS_PATH, 'r', encoding='utf-8') as f:
+        lineas = f.readlines()
+
+    nuevas_lineas = []
+    dentro_del_bloque = False
+
+    for linea in lineas:
+        if MARKER in linea:
+            dentro_del_bloque = not dentro_del_bloque
+            continue
+        if not dentro_del_bloque:
+            nuevas_lineas.append(linea)
+
+    with open(HOSTS_PATH, 'w', encoding='utf-8') as f:
+        f.writelines(nuevas_lineas)
+
+    print("[+] Entradas del hosts eliminadas correctamente.")
+
+atexit.register(remove_hosts)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
@@ -1388,6 +1436,7 @@ def minigame_reward():
 
 
 if __name__ == '__main__':
+    add_hosts()
     print("\n" + "★"*55)
     print("  EL SERVIDOR ESTÁ EN LÍNEA Y LISTO PARA JUGAR  ")
     print("   ¡Tenga un excelente juego, Maestro Dragón! ")
