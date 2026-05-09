@@ -9,6 +9,8 @@ import time
 import hmac
 import hashlib
 import random
+import atexit
+import ctypes
 
 app = Flask(__name__)
 
