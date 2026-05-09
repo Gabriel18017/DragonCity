@@ -1,6 +1,4 @@
 {
-  "timestamp": 0,
-  "result": "success",
   "map": {
     "expansions": [
       62,
@@ -11,15 +9,14 @@
       74
     ],
     "increasedPopulation": 0,
-    "store": {},
     "items": {
       "0": [
-        1,
+        55,
         21,
         72,
         0,
         0,
-        1
+        0
       ],
       "1": [
         50,
@@ -1341,12 +1338,9 @@
     "islandNumber": 1,
     "seasonOfferHelp": 0,
     "seasonOfferReceived": 0,
-    "universAttackWin": [],
-    "workBuildingsInfo": [],
-    "work": {},
-    "eggs": [],
-    "dragons": []
+    "universAttackWin": []
   },
+  "neighbors": [],
   "playerInfo": {
     "pid": "",
     "name": "",
@@ -1357,14 +1351,11 @@
     "pvpLevel": 1,
     "gold": 2000,
     "food": 140,
-    "cash": 8,
+    "cash": 10,
     "world_id": 0,
     "completed_tutorial": 0
   },
   "privateState": {
-	"showedNewsTimestamp": [
-      0
-    ],
     "attacksSent": [],
     "goals": [],
     "lastUpgrades": [],
@@ -1373,6 +1364,7 @@
     "dragonariumSlot": [],
     "timeStampMondayBonus": 0,
     "timestampLastBonus": 0,
+    "showedNewsTimestamp": [],
     "collectGame": 0,
     "kompuSpells": 0,
     "kompuLastTimeStamp": 0,
@@ -1388,10 +1380,13 @@
     "teams": {},
     "quality": 1,
     "xmasPresentReceived": 0,
+    "deusCardsLastGenerated": 0,
+    "deusCardsLastTimestamp": 0,
     "casinoSpins": 0,
     "casinoSpinCounter": 0,
     "casinoPrizeCounter": 0,
     "deusVault": [],
     "ownedDragons": []
-  }
+  },
+  "timestamp": 0
 }
