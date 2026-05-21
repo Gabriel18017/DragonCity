@@ -1228,7 +1228,7 @@ def packet_handler():
                     work_data = player_data.get('map', {}).get('work', {}).get(breeding_iso_id)
                     
                     if work_data:
-                        dragon_id = work_data[3]
+                        dragon_id = work_data[4]
                         
                         if 'eggs' not in player_data['map']:
                             player_data['map']['eggs'] = []
