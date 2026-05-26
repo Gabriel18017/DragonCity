@@ -5,6 +5,18 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
     <style>
+		html, body {
+			width: 100%;
+			height: 100%;
+		}
+
+		#flashContent {
+			position: fixed;
+			top: 0; left: 0;
+			width: 100%;
+			height: 100%;
+		}
+		
         body {
             margin: 0;
             padding: 0;
@@ -123,14 +135,15 @@
         "push_time":       "30",
         "offer_type":      "0",
         "fb_promo_uri":    "",
-        "spdebug":         "1"
+        "spdebug":         "1",
+		"fb_sig_friends":  "21012395"
     };
 
     function embedGame() {
         swfobject.embedSWF(
             "flash/DCLoader.swf",
             "flashContent",
-            "1280", "638", "11.0.0", false,
+            "100%", "80%", "11.0.0", false,
             flashVars,
             {
                 allowScriptAccess: "always",
