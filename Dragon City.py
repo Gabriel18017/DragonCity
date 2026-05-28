@@ -553,6 +553,7 @@ def packet_handler():
                     
                     if egg_data:
                         dragon_type_id = egg_data.get('type')
+
                         item_cfg = get_item_config(game_config, dragon_type_id)
                         
                         if item_cfg:
@@ -681,23 +682,18 @@ def packet_handler():
 
                         gold_reward = reward.get('g', 0)
                         food_reward = reward.get('f', 0)
+                        cash_reward = reward.get('c', 0)
                         xp_reward = reward.get('x', 0)
 
                         if gold_reward > 0:
                             player_data['playerInfo']['gold'] += gold_reward
                         if food_reward > 0:
                             player_data['playerInfo']['food'] += food_reward
+                        if cash_reward > 0:
+                            player_data['playerInfo']['cash'] += cash_reward
                         if xp_reward > 0:
                             player_data['playerInfo']['xp'] += xp_reward
-                        
-                        if 'goals' not in player_data['privateState']:
-                            player_data['privateState']['goals'] = [None] * 200
-                        
-                        while len(player_data['privateState']['goals']) <= goal_id:
-                            player_data['privateState']['goals'].append(None)
-                        
-                        player_data['privateState']['goals'][goal_id] = [1, 1]
-                        
+                                                
                         print(f"   [COMPLETE_GOAL] Goal ID {goal_id} completado!")
                         print(f"   [+] Recompensas: Gold +{gold_reward} | Food +{food_reward} | XP +{xp_reward}")
                         print(f"   [-] Totales: Oro: {player_data['playerInfo']['gold']} | Comida: {player_data['playerInfo']['food']} | XP: {player_data['playerInfo']['xp']}")
