@@ -1338,7 +1338,8 @@
     "islandNumber": 1,
     "seasonOfferHelp": 0,
     "seasonOfferReceived": 0,
-    "universAttackWin": []
+    "universAttackWin": [],
+	"store": []
   },
   "neighbors": [],
   "playerInfo": {
@@ -1351,7 +1352,7 @@
     "pvpLevel": 1,
     "gold": 2000,
     "food": 140,
-    "cash": 10,
+    "cash": 8,
     "world_id": 0,
     "completed_tutorial": 0
   },
@@ -1374,7 +1375,7 @@
     "kompuBoxesOpened": [],
     "kompuBoxesDragons": [],
     "kompuBoxesShuffledDragons": [],
-    "currentTournament": [],
+    "currentTournament": 1,
     "beginTournamentTs": 0,
     "endTournamentTs": 0,
     "teams": {},
@@ -1386,6 +1387,7 @@
     "casinoSpinCounter": 0,
     "casinoPrizeCounter": 0,
     "deusVault": [],
+	"gifts": [],
     "ownedDragons": []
   },
   "timestamp": 0
