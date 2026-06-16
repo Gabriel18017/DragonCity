@@ -11,8 +11,12 @@ import hashlib
 import random
 import atexit
 import ctypes
+import math
+import queue
 
 app = Flask(__name__)
+
+jugadores_sse = {}
 
 HOSTS_PATH = r"C:\Windows\System32\drivers\etc\hosts"
 
@@ -81,10 +85,10 @@ WEIGHT_DIFFICULTY_BOOSTED = {1: 40, 2: 35, 3: 25}
 
 CATEGORY_MULTIPLIER = {
     1: 1.0,
-    2: 0.85,
-    3: 0.45,
-    4: 0.18,
-    5: 0.12,
+    2: 0.95,
+    3: 0.55,
+    4: 0.22,
+    5: 0.15,
 }
 
 LEGENDARY_COMBOS_BY_ATTRS = {
@@ -313,22 +317,38 @@ def srv_handler(filename):
     user_id = request.args.get('USERID') or request.form.get('USERID')
     player_name_from_url = request.args.get('player_name')
 
+    target_id = request.form.get('user') or request.args.get('user')
+    is_visiting = bool(target_id and target_id not in ('0', '', user_id))
+    if is_visiting:
+        user_id = target_id
+
     print(f"\n>>> [PETICIÓN SRV] {filename} | USERID: {user_id}")
 
-    if filename == 'get_game_config.json':
-        return send_from_directory(SRV_DIR, filename)
+    if filename in ('get_game_config.json', 'get_game_config.php'):
+        config_data = load_game_config()
+        signed = sign_packet(config_data)
+        response = app.response_class(
+            response=signed,
+            status=200,
+            mimetype='text/plain'
+        )
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        return response
 
     if filename in ('get_player_info.json', 'get_player_info.php'):
         player_data = load_player(user_id)
-        
+
         if 'playerInfo' in player_data:
             if not player_data['playerInfo'].get('pid'):
                 player_data['playerInfo']['pid'] = user_id
             if player_name_from_url:
                 player_data['playerInfo']['name'] = player_name_from_url
-            save_player(player_data, user_id)
-        
-        return jsonify(player_data)
+                
+            if not is_visiting:
+                save_player(player_data, user_id)
+        signed = sign_packet(player_data)
+        return signed, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
     return jsonify({"result": "200"})
 
@@ -355,9 +375,32 @@ def sync_error_handler():
 def track_status_handler():
     return ("", 200)
 
+@app.route('/stream')
+def stream():
+    user_id = request.args.get('USERID')
+    
+    if not user_id:
+        return "USERID requerido", 400
+
+    if user_id not in jugadores_sse:
+        jugadores_sse[user_id] = queue.Queue()
+
+    def event_stream():
+        while True:
+            try:
+                mensaje = jugadores_sse[user_id].get(timeout=20)
+                yield f"data: {mensaje}\n\n"
+            except queue.Empty:
+                yield "data: PING\n\n"
+            except Exception as e:
+                print(f"[!] Error en el canal de transmisión SSE: {e}")
+                break
+
+    return app.response_class(event_stream(), mimetype='text/event-stream')
+
 print("[+] Analizando protocolo de comandos (packet.php)...")
 print("    -> Se han identificado 104 comandos...")
-print("    -> [ESTADO] Comandos implementados: 30/104 | Progreso:  28.8%")
+print("    -> [ESTADO] Comandos implementados: 46/104 | Progreso:  44,2%")
 print("    -> El resto de comandos devolverán un 'fallback' automático para evitar cierres.")
 @app.route('/static/dragoncity/srv/packet.php', methods=['POST', 'GET'])
 def packet_handler():
@@ -382,6 +425,11 @@ def packet_handler():
 
             response_results = []
 
+            comandos_añadidos = ['buy','buy_egg','place_stored_egg','hatch_egg','feed_dragon','set_goals','complete_goal','breed_dragon','move','sell','sell_egg','sell_dragon','store_item','orient','complete_tutorial','collect','expand_gold', 'expand_cash','activate','finish_building','upgrade','rename_dragon','speed_collect','speed_hatch','sync','ping','finish_breeding2','expand_island','move_dragon','buy_treasure_new','set_attack_team','deus_cards_generate','deus_cards_claim','begin_tournament','end_tournament','admin_speed_tournament','start_training','speed_training','finish_training','weekly_reward','place_stored_item','buy_treasure_popup','complete_collection','dragonarium_push','dragonarium_pull','dragonarium_add']
+            
+            comando_valido_procesado = False
+            comandos_ignorados = []
+
             for cmd_data in commands:
                 cmd = cmd_data.get('cmd')
                 cmd_number = cmd_data.get('number')
@@ -390,6 +438,9 @@ def packet_handler():
                 cmd_result = "ok"
 
                 print(f"-> Comando: {cmd} | Args: {args} | N: {cmd_number}")
+
+                if cmd in comandos_añadidos:
+                    comando_valido_procesado = True
                 
                 if cmd == 'buy':
                     iso_id = str(args[0])
@@ -482,7 +533,6 @@ def packet_handler():
                     else:
                         print(f"   [!] Error: El dragón con ID {dragon_id} no existe en get_game_config.json")
                 
-                
                 elif cmd == 'place_stored_egg':
                     egg_uid = args[0]
                     dragon_id = args[1]
@@ -493,23 +543,10 @@ def packet_handler():
                             item_cfg = item
                             break
                     
-                    if item_cfg:
-                        costs = item_cfg.get('costs', {})
-                        gold_cost = costs.get('g', 0)
-                        cash_cost = costs.get('c', 0)
-                        
-                        if gold_cost > 0:
-                            player_data['playerInfo']['gold'] = max(0, player_data['playerInfo']['gold'] - gold_cost)
-                        if cash_cost > 0:
-                            player_data['playerInfo']['cash'] = max(0, player_data['playerInfo']['cash'] - cash_cost)
-
-                        xp_gain = item_cfg.get('xp', 0)
-                        player_data['playerInfo']['xp'] += xp_gain
-
                         if 'eggs' not in player_data['map']:
                             player_data['map']['eggs'] = []
                             
-                        nombres_dragon = ["Roxy", "Horacio", "Sergi", "Kasia", "Xavi", "Draco", "Ignis", "Gabriel"]
+                        nombres_dragon = ["Roxy", "Horacio", "Sergi", "Kasia", "Xavi", "Draco", "Ignis", "Gabriel", "Abdona", "Adolfina", "Agripina", "Aleja", "Altagracia", "Amadora", "Amelia", "Anatolia", "Aniceta", "Antolina", "Apolonia", "Arcadia", "Argimira", "Atanasia", "Áurea", "Balbina", "Baltasara", "Basilisa", "Bercia", "Bernabea", "Bernarda", "Blacina", "Blasina", "Brígida", "Bonifacia", "Calista", "Casilda", "Castora", "Cayetana", "Celedonia", "Celestina", "Celina", "Cesárea", "Clementa", "Crisanta", "Crisóstoma", "Críspula", "Cristeta", "Dámasa", "Demetria", "Diega", "Dionisia", "Dominga", "Dominica", "Dorotea", "Dosinda", "Edelmira", "Edicta", "Eduvigis", "Efigenia", "Eleuteria", "Elicia", "Emerenciana", "Emeteria", "Ermisinda", "Escolástica", "Esmaragda", "Esmerencia", "Estanislá", "Etelvina", "Eudosia", "Eulogia", "Eustaquia", "Ezequiela", "Evarista", "Facunda", "Fausta", "Felicia", "Felisa", "Feliciana", "Froilana", "Fulgencia", "Gaspara", "Gelsumina", "Genoveva", "Getrudis", "Gertrudis", "Gervasia", "Gliceria", "Gracia", "Graciana", "Gregoria", "Guillerma", "Gumersinda", "Felicia", "Fidela", "Froilana", "Hermelinda", "Herminia", "Hilaria", "Humildad", "Indalecia", "Ilora", "Isidora", "Isidra", "Jacoba", "Jerónima", "Jesusa", "Jorja", "Juliana", "Laureana", "Leocadia", "Leoncia", "Liberata", "Librada", "Lopa", "Lorenza", "Luciana", "Lucrecia", "Mamesa", "Marciala", "Marciana", "Matea", "Matiasa", "Máxima", "Melchora", "Melitona", "Micaela", "Miguela", "Montserrate", "Nazaria", "Nemesia", "Nestora", "Nicanora", "Nicasia", "Jacinta", "Jesusa", "Olalla", "Olaya", "Orosia", "Parda", "Paspasia", "Patrocinia", "Peregrina", "Perpétua", "Petra", "Petrola", "Petrona", "Petronila", "Pia", "Polonia", "Pomposa", "Potencia", "Práxedes", "Preciosa", "Prisca", "Priscila", "Quintina", "Quiteria", "Ramira", "Reparada", "Ricarda", "Romualda", "Rudesinda", "Rufa", "Rufina", "Salvadora", "Sancia", "Sandalia", "Santas", "Santiaga", "Saturia", "Saturnina", "Sebastiana", "Segunda", "Semproniana", "Serapia", "Sergia", "Silvestra", "Simeona", "Simona", "Socorro", "Sotera", "Teodomira", "Teodora", "Teodosia", "Tiburcia", "Tomasa", "Toribia", "Úrsula", "Abundio", "Acacio", "Agapito", "Amalio", "Ambrosio", "Aniceto", "Anselmo", "Apolonio", "Aquilino", "Argimiro", "Arquimimo", "Arsenio", "Ascensio", "Asterio", "Atanasio", "Atilano", "Áureo", "Avelino", "Bartolo", "Basilio", "Baudilio", "Belarmino", "Benigno", "Bonifacio", "Buenaventura", "Calisto", "Calixto", "Casiano", "Casildo", "Castiano", "Casimiro", "Cecilio", "Celdonio", "Celedonio", "Cesáreo", "Cipriaco", "Cipriano", "Cipriniano", "Ciriaco", "Cirilo", "Clemente", "Cleto", "Columbano", "Conrado", "Crescencio", "Crisóstomo", "Crispín", "Críspulo", "Cruz", "Deogracias", "Dionisio", "Domiciano", "Doroteo", "Eleuterio", "Eliodoro", "Eliseo", "Emerico", "Emeterio", "Emmanuel", "Epafrodito", "Epifanio", "Escolástico", "Estanislao", "Eufrasio", "Eulogio", "Evelio", "Fabriciano", "Faustina", "Feliciano", "Florencio", "Floro", "Froilán", "Fructuoso", "Frutos", "Fulgencio", "Gregorio", "Guadalupe", "Gumersindo", "Helimenas", "Hermenegildo", "Herminio", "Hermógenes", "Higinio", "Hilario", "Hilarión", "Hipólito", "Indalecio", "Inocente", "Isabelo", "Isidoro", "Juvernón", "Laureano", "Leandro", "Leocadio", "León", "Leovigildo", "Lesmes", "Lisardo", "Lope", "Lupicinio", "Macabeo", "Macario", "Macedonio", "Margarito", "Magin", "Mauro", "Maximino", "Medardo", "Melitón", "Minervino", "Minervo", "Natalio", "Nemesio", "Nicanor", "Niceto", "Nicomedes", "Norberto", "Odón", "Orencio", "Pantaleón", "Paulilo", "Paulino", "Patricio", "Perfecto", "Petrolino", "Petronilo", "Pío", "Policarpo", "Polonio", "Pomposo", "Ponciano", "Primitivo", "Protasio", "Prudencio", "Regino", "Remigio", "Restituto", "Rinaldo", "Robustiano", "Romualdo", "Rómulo", "Rosalino", "Ruperto", "Rufino", "Rufo", "Sabas", "Sabiniano", "Salvio", "Sandalio", "Saturio", "Saturnino", "Serapio", "Servando", "Serbando", "Severo", "Silverio", "Silvestre", "Silvio", "Simeón", "Sinforosio", "Sinforoso", "Sofío", "Sofronio", "Sotero", "Teódulo", "Telesforo", "Teopisto", "Tereso", "Tiburcio", "Timoteo", "Toribio", "Trifón", "Trinitario", "Ulpiano", "Valeriano", "Venancio", "Victoriano", "Zoilo"]
 
                         new_egg = {
                             "id": egg_uid,
@@ -522,10 +559,9 @@ def packet_handler():
                         
                         player_data['map']['eggs'].append(new_egg)
                         
-                        print(f"   [BUY_EGG OK] Huevo de {item_cfg.get('name')} comprado (UID: {egg_uid}).")
-                        print(f"   [-] Oro: {player_data['playerInfo']['gold']} | Gemas: {player_data['playerInfo']['cash']} | XP: {player_data['playerInfo']['xp']}")
+                        print(f"   [PLACE_STORE_EGG OK] Huevo de {item_cfg.get('name')} colocado (UID: {egg_uid}).")
                     else:
-                        print(f"   [!] Error: El dragón con ID {dragon_id} no existe en get_game_config.json")
+                        print(f"   [!] Error: El dragón con ID {dragon_id} no existe en el almacen")
                         
                 elif cmd == 'hatch_egg':
                     egg_uid = args[0]
@@ -558,6 +594,7 @@ def packet_handler():
                         
                         if item_cfg:
                             hatch_xp = item_cfg.get('xp', 0)
+                            attacks = item_cfg.get('attacks', 0)
                             player_data['playerInfo']['xp'] += hatch_xp
 
                             if 'dragons' not in player_data['map']:
@@ -571,13 +608,23 @@ def packet_handler():
                                 "name": dragon_name,
                                 "ts": int(time.time()),
                                 "work_id": [],
-                                "attack": []
+                                "nbKill": 0,
+                                "attack": attacks
                             }
                             
                             player_data['map']['dragons'].append(new_dragon)
+
+                            if 'ownedDragons' not in player_data['map']:
+                                player_data['map']['ownedDragons'] = {}
+
+                            id_str = str(dragon_type_id)
+
+                            if id_str not in player_data['map']['ownedDragons']:
+                                player_data['map']['ownedDragons'][id_str] = [1, 0, 0]
                             
                             print(f"   [HATCH_EGG OK] Dragón {dragon_name} (Tipo: {dragon_type_id}) eclosionado en el hábitat {habitat_uid}.")
                             print(f"   [-] XP ganado: {hatch_xp} | XP total: {player_data['playerInfo']['xp']}")
+                            print(f"   [-] Dragón {dragon_name} (Tipo: {dragon_type_id}) añadido al Libro de Dragones")
                         else:
                             print(f"   [!] Error: Configuración para el dragón {dragon_type_id} no encontrada en game_config.")
                     else:
@@ -648,6 +695,20 @@ def packet_handler():
                                     player_data['playerInfo']['food'] -= food_cost
 
                                     dragon['xp'] = current_xp + 1
+                                    new_level = (dragon['xp'] // 4) + 1
+
+                                    dragon_type_str = str(dragon.get('type'))
+
+                                    if 'ownedDragons' not in player_data['map']:
+                                        player_data['map']['ownedDragons'] = {}
+
+                                    if dragon_type_str not in player_data['map']['ownedDragons']:
+                                        player_data['map']['ownedDragons'][dragon_type_str] = [1, 0, 0]
+
+                                    if new_level >= 4:
+                                        player_data['map']['ownedDragons'][dragon_type_str][1] = 2
+                                    if new_level >= 7:
+                                        player_data['map']['ownedDragons'][dragon_type_str][2] = 3
                                     
                                     print(f"   [FEED_DRAGON OK] Dragón '{dragon.get('name', 'Desconocido')}' (UID: {dragon_uid}) alimentado.")
                                     print(f"   [-] XP Dragón subió a: {dragon['xp']} | Costo: {food_cost} | Comida restante: {player_data['playerInfo']['food']}")
@@ -671,7 +732,7 @@ def packet_handler():
                         
                     player_data['privateState']['goals'][goal_id] = goal_state
                     
-                    print(f"   [SET_GOALS] Goal ID {goal_id} establecido a estado {goal_state}")
+                    print(f"   [SET_GOALS OK] Goal ID {goal_id} establecido a estado {goal_state}")
                 
                 elif cmd == 'complete_goal':
                     goal_id = int(args[0])
@@ -694,7 +755,7 @@ def packet_handler():
                         if xp_reward > 0:
                             player_data['playerInfo']['xp'] += xp_reward
                                                 
-                        print(f"   [COMPLETE_GOAL] Goal ID {goal_id} completado!")
+                        print(f"   [COMPLETE_GOAL OK] Goal ID {goal_id} completado!")
                         print(f"   [+] Recompensas: Gold +{gold_reward} | Food +{food_reward} | XP +{xp_reward}")
                         print(f"   [-] Totales: Oro: {player_data['playerInfo']['gold']} | Comida: {player_data['playerInfo']['food']} | XP: {player_data['playerInfo']['xp']}")
                     else:
@@ -758,7 +819,7 @@ def packet_handler():
                     if iso_id in player_data['map'].get('items', {}):
                         player_data['map']['items'][iso_id][3] = current_ts
 
-                    print(f"[+] Breed: cueva={iso_id} | padres tipos=({dragon1_type},{dragon2_type}) "
+                    print(f"   [BREED_DRAGON OK] Breed: cueva={iso_id} | padres tipos=({dragon1_type},{dragon2_type}) "
                           f"| resultado={outcome_id} ({dragon_db.get(outcome_id,{}).get('name','?')}) "
                           f"| boost={boosted}")
 
@@ -836,33 +897,25 @@ def packet_handler():
 
                 elif cmd == 'store_item':
                     iso_id = str(args[0])
-
-                    if 'items' in player_data['map'] and iso_id in player_data['map']['items']:
-                        item_data = player_data['map']['items'][iso_id]
-                        item_catalog_id = int(item_data[0])
+                    
+                    if iso_id in player_data['map']['items']:
+                        item_id = str(player_data['map']['items'][iso_id][0])
 
                         del player_data['map']['items'][iso_id]
 
-                        if 'gifts' not in player_data['privateState']:
-                            player_data['privateState']['gifts'] = []
+                        if 'store' not in player_data['map']:
+                            player_data['map']['store'] = {}
+                        if 'items' not in player_data['map']['store']:
+                            player_data['map']['store']['items'] = {}
 
-                        item_found = False
-                        for stored_item in player_data['privateState']['gifts']:
-                            if stored_item.get('id') == item_catalog_id:
-                                stored_item['amount'] = stored_item.get('amount', 1) + 1
-                                item_found = True
-                                break
-
-                        if not item_found:
-                            player_data['privateState']['gifts'].append({
-                                "id": item_catalog_id,
-                                "amount": 1,
-                                "giftId": 0
-                            })
+                        if item_id in player_data['map']['store']['items']:
+                            player_data['map']['store']['items'][item_id] += 1
+                        else:
+                            player_data['map']['store']['items'][item_id] = 1
                             
-                        print(f"   [STORE_ITEM OK] Item UID {iso_id} (Catálogo: {item_catalog_id}) movido al almacén.")
+                        print(f"   [STORE_ITEM OK] Objeto {item_id} (ISO: {iso_id}) guardado en el almacén.")
                     else:
-                        print(f"   [!] Error: El item {iso_id} no existe en el mapa.")
+                        print(f"   [!] Error: El objeto con ISO ID {iso_id} no existe en el mapa.")
 
                 elif cmd == 'orient':
                     iso_id = str(args[0])
@@ -904,7 +957,7 @@ def packet_handler():
 
                     player_data['playerInfo']['completed_tutorial'] = str(tutorial_value)
                     
-                    print(f"   [TUTORIAL] Tutorial marcado como completado (Valor: {tutorial_value}).")
+                    print(f"   [COMPLETE_TUTORIAL OK] Tutorial marcado como completado (Valor: {tutorial_value}).")
                     
 
                 elif cmd in ['expand_gold', 'expand_cash']:
@@ -929,7 +982,7 @@ def packet_handler():
                             
                             if expansion_id not in player_data['map']['expansions']:
                                 player_data['map']['expansions'].append(expansion_id)
-                                print(f"   [EXPANSION] ID {expansion_id} desbloqueada. Indice precio: {current_idx}. Costo: {costo} {recurso_key}.")
+                                print(f"   [EXPANSION OK] ID {expansion_id} desbloqueada. Indice precio: {current_idx}. Costo: {costo} {recurso_key}.")
                             else:
                                 print(f"   [!] La expansión {expansion_id} ya figuraba como comprada.")
                         else:
@@ -958,7 +1011,7 @@ def packet_handler():
                             item_data[3] = current_ts
                             attrs['lat'] = current_ts
                             
-                            print(f"   [COLLECT HÁBITAT] Oro recolectado: {gold_collected}")
+                            print(f"   [COLLECT_HÁBITAT OK] Oro recolectado: {gold_collected}")
 
                         elif len(args) > 1 and args[1] == "fc":
                             if 'cp' in attrs:
@@ -975,7 +1028,7 @@ def packet_handler():
                                     player_data['playerInfo']['food'] += food_collected
                                     player_data['playerInfo']['xp'] += xp_collected
 
-                                    print(f"   [COLLECT GRANJA] Comida: {food_collected} | XP: {xp_collected}")
+                                    print(f"   [COLLECT_GRANJA OK] Comida: {food_collected} | XP: {xp_collected}")
 
                                 del attrs['cp']
 
@@ -985,7 +1038,7 @@ def packet_handler():
                             item_data[3] = 0 
                             if 'lat' in attrs:
                                 attrs['lat'] = current_ts
-                            print(f"   [COLLECT GENÉRICO] Recolección en el ID: {iso_id}")
+                            print(f"   [COLLECT OK] Recolección en el ID: {iso_id}")
 
                         print(f"   [-] Estado actual -> Oro: {player_data['playerInfo']['gold']} | Comida: {player_data['playerInfo']['food']} | XP: {player_data['playerInfo']['xp']}")
                     
@@ -1066,11 +1119,11 @@ def packet_handler():
                                 del item_data[6]['tb']
                                 print(f"   [FINISH] Propiedad 'tb' eliminada del iso_id {iso_id}")
 
-                        print(f"   [FINISH_BUILDING] Objeto {iso_id} terminado. XP Ganada: {xp_to_add}")
+                        print(f"   [FINISH_BUILDING OK] Objeto {iso_id} terminado. XP Ganada: {xp_to_add}")
                     else:
                         print(f"   [!] Error: El iso_id {iso_id} no existe en el mapa.")
 
-                elif cmd == "upgrade":
+                elif cmd == 'upgrade':
                     unique_id = str(args[0])
                     
                     if unique_id in player_data['map']['items']:
@@ -1112,9 +1165,9 @@ def packet_handler():
                                     item_data[6].pop('tb', None)
                                     item_data[3] = 0 
 
-                                print(f"[+] Item {unique_id} mejorado a tipo {new_type_id}. TB: {item_data[6].get('tb')}")
+                                print(f"   [UPGRADE OK] Item {unique_id} mejorado a tipo {new_type_id}. TB: {item_data[6].get('tb')}")
 
-                elif cmd == "rename_dragon":
+                elif cmd == 'rename_dragon':
                     dragon_id = args[0]
                     nuevo_nombre = str(args[1])
 
@@ -1124,13 +1177,13 @@ def packet_handler():
                             if dragon.get('id') == dragon_id:
                                 dragon['name'] = nuevo_nombre
                                 dragon_encontrado = True
-                                print(f"[+] Dragón {dragon_id} renombrado exitosamente a: {nuevo_nombre}")
+                                print(f"   [RENAME_DRAGON OK]Dragón {dragon_id} renombrado exitosamente a: {nuevo_nombre}")
                                 break
                     
                     if not dragon_encontrado:
                         print(f"[!] Advertencia: No se encontró el dragón con ID {dragon_id} en el archivo del jugador.")
 
-                elif cmd == "speed_collect":
+                elif cmd == 'speed_collect':
                     unique_id = str(args[0])
                     type_speed = args[1]
                     
@@ -1161,14 +1214,14 @@ def packet_handler():
 
                                     item_data[3] = current_ts - duration_seconds
                                     
-                                    print(f"[+] Speed Collect en {unique_id}. Costo: {gems_cost} gemas. Adelantados {time_remaining}s.")
+                                    print(f"   [SPEED_COLLECT OK] En {unique_id}. Costo: {gems_cost} gemas. Adelantados {time_remaining}s.")
                                     print(f"    Gemas restantes: {player_data['playerInfo']['cash']}")
                                 else:
                                     print(f"[!] Sin gemas suficientes para speed_collect en granja {unique_id}")
                         else:
                             print(f"[!] El objeto {unique_id} no tiene un cultivo activo ('cp')")
 
-                elif cmd == "speed_hatch":
+                elif cmd == 'speed_hatch':
                     egg_id = args[0]
                     
                     if 'eggs' in player_data.get('map', {}):
@@ -1198,7 +1251,7 @@ def packet_handler():
                                     player_data['playerInfo']['cash'] -= gems_cost
                                     egg_data['ts'] = current_ts - hatching_time
                                     
-                                    print(f"[+] Speed Hatch en huevo {egg_id} (Tipo {dragon_type}). Costo: {gems_cost} gemas.")
+                                    print(f"   [SPEED_HATCH OK] En huevo {egg_id} (Tipo {dragon_type}). Costo: {gems_cost} gemas.")
                                     print(f"    Gemas restantes: {player_data['playerInfo']['cash']}")
                                 else:
                                     print(f"[!] Sin gemas suficientes para speed_hatch en huevo {egg_id}")
@@ -1214,7 +1267,7 @@ def packet_handler():
                     print(f"   [-] Todo en orden. Devolviendo estado actual al cliente.")
 
                 elif cmd == 'ping':
-                    print(f"   [PING] Señal de actividad (keep-alive) recibida del cliente.")
+                    print(f"   [PING OK] Señal de actividad (keep-alive) recibida del cliente.")
 
                 elif cmd == 'finish_breeding2':
                     breeding_iso_id = str(args[0])
@@ -1246,7 +1299,7 @@ def packet_handler():
                         if breeding_iso_id in player_data['map'].get('items', {}):
                             player_data['map']['items'][breeding_iso_id][3] = 0
 
-                        print(f"[+] Finish Breeding OK en {breeding_iso_id}")
+                        print(f"   [FINISH_BREEDING2 OK] En {breeding_iso_id}")
                         print(f"    -> Huevo creado: {dragon_id} (UID: {new_egg_uid}) movido a Hatchery {hatchery_iso_id}")
                     else:
                         print(f"[!] Error: No se encontró información de cría para el edificio {breeding_iso_id}")
@@ -1279,7 +1332,7 @@ def packet_handler():
                                 elif res_type == 'c':
                                     player_data['playerInfo']['cash'] = max(0, player_data['playerInfo']['cash'] - amt)
                                 
-                            print(f"[+] Expand Island OK en parcela {expansion_id}.")
+                            print(f"   [EXPAND_ISLAND OK] Isla expandida hacia parcela {expansion_id}.")
                             print(f"    -> Costo cobrado (Índice {cost_index}): {cost_obj}")
                         else:
                             print(f"[!] Aviso: El índice de costo {cost_index} supera el límite de ISLANDS_COSTS.")
@@ -1301,7 +1354,7 @@ def packet_handler():
                                 dragon_found = True
                                 
                                 nombre_dragon = dragon.get('name', 'Unknown')
-                                print(f"[+] Move Dragon OK: Dragón {dragon_uid} ('{nombre_dragon}')")
+                                print(f"   [MOVE_DRAGON OK] Dragón {dragon_uid} ('{nombre_dragon}')")
                                 print(f"    -> Movido del habitat {old_habitat} al habitat {new_habitat_id}")
                                 break
                                 
@@ -1333,7 +1386,7 @@ def packet_handler():
                             else:
                                 player_data['playerInfo'][res_type] = amount
                                 
-                            print(f"[+] Buy Treasure OK: Tesoro ID {treasure_id} comprado.")
+                            print(f"   [BUY_TREASURE_NEW OK] Tesoro ID {treasure_id} comprado.")
                             print(f"    -> Costo: {price} gemas | Recompensa: +{amount} {res_type}.")
                             print(f"    -> Gemas restantes: {player_data['playerInfo']['cash']}")
                         else:
@@ -1341,6 +1394,566 @@ def packet_handler():
                     else:
                         print(f"[!] Error: No se encontró el tesoro con ID {treasure_id} en la configuración (treasure_items).")
 
+                elif cmd == 'set_attack_team':
+                    team_type = cmd_data.get('args')[0]
+                    team_ids_str = cmd_data.get('args')[1]
+
+                    team_ids = json.loads(team_ids_str) 
+
+                    formatted_team = [{"id": int(dragon_id)} for dragon_id in team_ids]
+
+                    if "teams" not in player_data["privateState"]:
+                        player_data["privateState"]["teams"] = {}
+
+                    player_data["privateState"]["teams"][team_type] = formatted_team
+                    print(f"   [SET_ATTACK_TEAM OK] Dragones elegidos: {formatted_team}")
+                    
+                elif cmd == 'deus_cards_generate':
+                    is_paid = int(args[0]) if len(args) > 0 else 0
+                    is_super = int(args[1]) if len(args) > 1 else 0
+
+                    if is_super == 1:
+                        cost = game_config.get('globals', {}).get('DRAGON_CARDS_SUPER_TRY', {}).get('value', 10)
+                        player_data['playerInfo']['cash'] = max(0, player_data['playerInfo']['cash'] - cost)
+                    elif is_paid == 1:
+                        cost = game_config.get('globals', {}).get('DRAGON_CARDS_TRY', {}).get('value', 3)
+                        player_data['playerInfo']['cash'] = max(0, player_data['playerInfo']['cash'] - cost)
+
+                    prize_id = random.randint(0, 8) 
+
+                    if 'deus_cards' not in player_data['privateState']:
+                        player_data['privateState']['deus_cards'] = {}
+                    player_data['privateState']['deus_cards']['pending_prize'] = prize_id
+
+                    cmd_result = prize_id
+                    print(f"   [DEUS_CARDS_GENERATE OK] Tirada generada. Premio ID: {prize_id}")
+                    
+                elif cmd == 'deus_cards_claim':
+                    current_time = int(time.time())
+                    prize_id = player_data['privateState'].get('deus_cards', {}).get('pending_prize', 0)
+
+                    prize_cfg = None
+                    for p in game_config.get('dragon_card_prizes', []):
+                        if p.get('id') == prize_id:
+                            prize_cfg = p
+                            break
+                            
+                    if prize_cfg:
+                        reward = prize_cfg.get('reward', {})
+                        
+                        if isinstance(reward, dict):
+                            gold_reward = reward.get('g', 0)
+                            food_reward = reward.get('f', 0)
+                            cash_reward = reward.get('c', 0)
+                            
+                            player_data['playerInfo']['gold'] += gold_reward
+                            player_data['playerInfo']['food'] += food_reward
+                            player_data['playerInfo']['cash'] += cash_reward
+                                
+                            print(f"   [DEUS_CARDS_CLAIM OK] Premio reclamado: Oro +{gold_reward} | Comida +{food_reward} | Gemas +{cash_reward}")
+
+                        elif isinstance(reward, int):
+                            dragon_id = reward
+                            print(f"   [DEUS_CARDS_CLAIM OK] Premio reclamado: Dragón ID {dragon_id}")
+
+                        elif reward == "retry":
+                            print("   [DEUS_CARDS_CLAIM OK] Premio: Retry (Tirada extra gratis)")
+                    
+                    if 'deus_cards' in player_data['privateState']:
+                        player_data['privateState']['deus_cards']['pending_prize'] = None
+                        
+                    player_data['privateState']['deusCardsLastTimestamp'] = current_time
+                    
+                elif cmd == 'begin_tournament':
+                    if 'privateState' not in player_data:
+                        player_data['privateState'] = {}
+
+                    current_ts = int(time.time())
+                    player_data['privateState']['beginTournamentTs'] = current_ts
+                    
+                    print(f"   [BEGIN_TOURNAMENT OK] Torneo iniciado. Timestamp guardado: {current_ts}")
+
+                elif cmd == 'end_tournament':
+                    player_won = str(args[0]) == "1"
+                    kills_log = json.loads(args[1]) if len(args) > 1 else {}
+                    
+                    if 'privateState' not in player_data:
+                        player_data['privateState'] = {}
+
+                    current_ts = int(time.time())
+                    player_data['privateState']['endTournamentTs'] = current_ts
+                    
+                    print(f"   [END_TOURNAMENT] Resultado: {'Ganador' if player_won else 'Perdedor'}. Kills: {kills_log}")
+
+                    if kills_log and 'dragons' in player_data.get('map', {}):
+                        for dragon in player_data['map']['dragons']:
+                            dragon_id_str = str(dragon.get('id'))
+                            
+                            if dragon_id_str in kills_log:
+                                kills_to_add = int(kills_log[dragon_id_str])
+     
+                                current_kills = dragon.get('nbKill', 0)
+                                dragon['nbKill'] = current_kills + kills_to_add
+                                
+                                print(f"   [+] Dragón {dragon.get('name', 'Unknown')} (ID: {dragon_id_str}) suma {kills_to_add} kills. Total: {dragon['nbKill']}")
+
+                    if player_won:
+                        current_tourney = str(player_data['privateState'].get('currentTournament', 1))
+                        tournaments_db = game_config.get('tournaments', {})
+                        
+                        if current_tourney in tournaments_db:
+                            tourney_data = tournaments_db[current_tourney]
+                            rewards = tourney_data.get('reward', {}).get('resources', {})
+
+                            gold_reward = rewards.get('g', 0)
+                            food_reward = rewards.get('f', 0)
+                            cash_reward = rewards.get('c', 0)
+
+                            if gold_reward > 0:
+                                player_data['playerInfo']['gold'] += gold_reward
+                            if food_reward > 0:
+                                player_data['playerInfo']['food'] += food_reward
+                            if cash_reward > 0:
+                                player_data['playerInfo']['cash'] += cash_reward
+
+                            player_data['privateState']['currentTournament'] = int(current_tourney) + 1
+                            
+                            print(f"   [END_TOURNAMENT OK] ¡Torneo {current_tourney} completado!")
+                            print(f"   [-] Recompensas añadidas -> Oro: {gold_reward} | Comida: {food_reward} | Gemas: {cash_reward}")
+                            print(f"   [-] Siguiente torneo configurado: {player_data['privateState']['currentTournament']}")
+                        else:
+                            print(f"   [!] Error: El torneo {current_tourney} no existe en get_game_config.json")
+
+                elif cmd == 'admin_speed_tournament':
+                    if 'privateState' not in player_data:
+                        player_data['privateState'] = {}
+
+                    globals_db = game_config.get('globals', {})
+
+                    speed_up_price = globals_db.get('TOURNAMENT_SPEED_UP_PRICE', {}).get('value', 2)
+
+                    cooldown_hours = globals_db.get('TOURNAMENT_COOLDOWN', {}).get('value', 12)
+                    cooldown_seconds = cooldown_hours * 3600
+
+                    if player_data['playerInfo']['cash'] >= speed_up_price:
+                        player_data['playerInfo']['cash'] -= speed_up_price
+
+                        current_end_ts = player_data['privateState'].get('beginTournamentTs', 0)
+                        new_ts = max(0, current_end_ts - cooldown_seconds)
+                        player_data['privateState']['beginTournamentTs'] = new_ts
+                        
+                        print(f"   [ADMIN_SPEED_TOURNAMENT OK] Torneo acelerado. Costo: {speed_up_price} gemas.")
+                        print(f"   [-] Nuevo endTournamentTs: {new_ts} | Gemas restantes: {player_data['playerInfo']['cash']}")
+                    else:
+                        print("   [!] Error: No hay suficientes gemas para acelerar el torneo.")
+                    
+                elif cmd == 'start_training':
+                    building_uid = str(args[0])
+                    dragon_uid = args[1]
+                    attack_id = args[2]
+                    attack_pos = args[3]
+                    
+                    current_ts = int(time.time())
+
+                    if 'work' not in player_data['map']:
+                        player_data['map']['work'] = {}
+
+                    player_data['map']['work'][building_uid] = [
+                        dragon_uid,
+                        attack_id,
+                        current_ts,
+                        attack_pos
+                    ]
+
+                    if 'dragons' in player_data.get('map', {}):
+                        for dragon in player_data['map']['dragons']:
+                            if str(dragon.get('id')) == str(dragon_uid):
+                                dragon['work_id'] = int(building_uid)
+                                print(f"   [-] El dragón {dragon.get('name', 'Unknown')} (ID: {dragon_uid}) ha entrado al centro de entrenamiento.")
+                                break
+                                
+                    print(f"   [START_TRAINING OK] Edificio {building_uid} entrenando el ataque {attack_id} en el slot {attack_pos}.")
+
+                elif cmd == 'speed_training':
+                    building_uid = str(args[0])
+                    
+                    if 'work' in player_data.get('map', {}) and building_uid in player_data['map']['work']:
+                        work_data = player_data['map']['work'][building_uid]
+
+                        attack_id = str(work_data[1])
+                        start_ts = int(work_data[2])
+                        current_ts = int(time.time())
+
+                        dragon_uid = str(work_data[0])
+                        attack_id = int(work_data[1])
+                        attack_pos = int(work_data[3])
+
+                        attacks_db = game_config.get('attacks', {})
+                        training_time = 0
+                        
+                        if attack_id in attacks_db:
+                            training_time = attacks_db[attack_id].get('training_time', 0)
+
+                        time_elapsed = current_ts - start_ts
+                        time_left = max(0, training_time - time_elapsed)
+                        
+                        
+                        speed_up_cost = max(1, math.ceil(time_left / 3600.0))
+
+                        if player_data['playerInfo']['cash'] >= speed_up_cost:
+                            player_data['playerInfo']['cash'] -= speed_up_cost
+
+                            player_data['map']['work'][building_uid][2] = current_ts - training_time - 10
+                            
+                            print(f"   [SPEED_TRAINING OK] Entrenamiento acelerado. Costo: {speed_up_cost} gemas.")
+                            print(f"   [-] Gemas restantes: {player_data['playerInfo']['cash']}")
+                        else:
+                            print("   [!] Error: No hay suficientes gemas para acelerar el entrenamiento.")
+
+                        dragon_found = False
+                        if 'dragons' in player_data.get('map', {}):
+                            for dragon in player_data['map']['dragons']:
+                                if str(dragon.get('id')) == dragon_uid:
+                                    dragon_found = True
+
+                                    if 'attack' not in dragon or not isinstance(dragon['attack'], list):
+                                        dragon['attack'] = [-1, -1, -1, -1]
+
+                                    while len(dragon['attack']) <= attack_pos:
+                                        dragon['attack'].append(-1)
+
+                                    old_attack = dragon['attack'][attack_pos]
+                                    dragon['attack'][attack_pos] = attack_id
+
+                                    dragon['work_id'] = [] 
+                                    
+                                    print(f"   [+] Dragón {dragon.get('name', 'Unknown')} (ID: {dragon_uid}) aprendió el ataque {attack_id} (reemplazando {old_attack} en slot {attack_pos}).")
+                                    break
+                        
+                        if dragon_found:
+                            del player_data['map']['work'][building_uid]
+                            print(f"   [FINISH_TRAINING OK] Entrenamiento finalizado y cola de trabajo limpiada en edificio {building_uid}.")
+                        else:
+                            print(f"   [!] Error: No se encontró al dragón {dragon_uid} en el mapa para enseñarle el ataque.")
+                            
+                    else:
+                        print(f"   [!] Error: El edificio {building_uid} no está en proceso de entrenamiento (no se encontró en 'work').")
+
+                elif cmd == 'finish_training':
+                    building_uid = str(args[0])
+
+                    if 'work' in player_data.get('map', {}) and building_uid in player_data['map']['work']:
+                        work_data = player_data['map']['work'][building_uid]
+                        
+                        dragon_uid = str(work_data[0])
+                        attack_id = int(work_data[1])
+                        attack_pos = int(work_data[3])
+
+                        dragon_found = False
+                        if 'dragons' in player_data.get('map', {}):
+                            for dragon in player_data['map']['dragons']:
+                                if str(dragon.get('id')) == dragon_uid:
+                                    dragon_found = True
+
+                                    if 'attack' not in dragon or not isinstance(dragon['attack'], list):
+                                        dragon['attack'] = [-1, -1, -1, -1]
+
+                                    while len(dragon['attack']) <= attack_pos:
+                                        dragon['attack'].append(-1)
+
+                                    old_attack = dragon['attack'][attack_pos]
+                                    dragon['attack'][attack_pos] = attack_id
+
+                                    dragon['work_id'] = [] 
+                                    
+                                    print(f"   [+] Dragón {dragon.get('name', 'Unknown')} (ID: {dragon_uid}) aprendió el ataque {attack_id} (reemplazando {old_attack} en slot {attack_pos}).")
+                                    break
+                        
+                        if dragon_found:
+                            del player_data['map']['work'][building_uid]
+                            print(f"   [FINISH_TRAINING OK] Entrenamiento finalizado y cola de trabajo limpiada en edificio {building_uid}.")
+                        else:
+                            print(f"   [!] Error: No se encontró al dragón {dragon_uid} en el mapa para enseñarle el ataque.")
+                            
+                    else:
+                        print(f"   [!] Error: El edificio {building_uid} no estaba registrado en 'work' (posiblemente ya finalizó o es un error de sincronización).")
+
+                elif cmd == 'weekly_reward':
+                    reward_args = json.loads(args[0])
+                    reward_index = int(reward_args[0])
+                    dragon_index = int(reward_args[1]) if len(reward_args) > 1 else 0
+
+                    globals_db = game_config.get('globals', {})
+                    monday_rewards = globals_db.get('MONDAY_BONUS_REWARDS', {}).get('value', [])
+                    monday_dragons = globals_db.get('MONDAY_BONUS_REWARDS_DRAGONS', {}).get('value', [])
+                    
+                    if reward_index < len(monday_rewards):
+                        reward = monday_rewards[reward_index]
+                        r_type = reward.get('type')
+                        r_value = reward.get('value', 0)
+
+                        if r_type == 'g':
+                            player_data['playerInfo']['gold'] += r_value
+                            print(f"   [WEEKLY_REWARD OK] Recompensa entregada: {r_value} Oro.")
+                        elif r_type == 'c':
+                            player_data['playerInfo']['cash'] += r_value
+                            print(f"   [WEEKLY_REWARD OK] Recompensa entregada: {r_value} Gemas.")
+                        elif r_type == 'f':
+                            player_data['playerInfo']['food'] += r_value
+                            print(f"   [WEEKLY_REWARD OK] Recompensa entregada: {r_value} Comida.")
+                        elif r_type == 'u':
+                            dragon_id = monday_dragons[dragon_index] if dragon_index < len(monday_dragons) else 1011
+
+                            new_egg_uid = int(time.time()) + random.randint(1000, 9999)
+                            new_egg = {
+                                "id": new_egg_uid,
+                                "type": dragon_id,
+                                "name": "Bonus",
+                                "xp": 0,
+                                "hatched": False,
+                                "ts": int(time.time())
+                            }
+                            if 'eggs' not in player_data['map']:
+                                player_data['map']['eggs'] = []
+                            player_data['map']['eggs'].append(new_egg)
+                            print(f"   [WEEKLY_REWARD OK] Recompensa entregada: Huevo de dragón ID {dragon_id}.")
+
+                        if 'privateState' not in player_data:
+                            player_data['privateState'] = {}
+                            
+                        current_ts = int(time.time())
+                        player_data['privateState']['timeStampMondayBonus'] = current_ts
+                        
+                        print(f"   [WEEKLY_REWARD OK] timeStampMondayBonus actualizado a: {current_ts}.")
+                    else:
+                        print(f"   [!] Error: El índice de recompensa {reward_index} no existe en la configuración global.")
+
+                elif cmd == 'place_stored_item':
+                    iso_id = str(args[0])
+                    item_id = str(args[1])
+                    tx = args[2]
+                    ty = args[3]
+
+                    item_found = False
+                    if 'store' in player_data['map'] and 'items' in player_data['map']['store']:
+                        if item_id in player_data['map']['store']['items']:
+                            item_found = True
+
+                            if player_data['map']['store']['items'][item_id] > 1:
+                                player_data['map']['store']['items'][item_id] -= 1
+                            else:
+                                del player_data['map']['store']['items'][item_id]
+
+                            if not player_data['map']['store']['items']:
+                                del player_data['map']['store']['items']
+                    
+                    if item_found:
+                        player_data['map']['items'][iso_id] = [int(item_id), int(tx), int(ty), 0, 0, 1, {}]
+                        
+                        print(f"   [PLACE_STORED OK] Objeto {item_id} sacado del almacén y colocado en mapa.")
+                    else:
+                        print(f"   [!] Error: Se intentó colocar el objeto {item_id} pero no existe en el almacén.")
+
+                elif cmd == 'buy_treasure_popup':
+                    treasure_id = int(args[0])
+                    
+                    treasures_db = {
+                        1: {"type": "gold", "amount": 75000, "price": 15},
+                        2: {"type": "gold", "amount": 200000, "price": 30},
+                        3: {"type": "gold", "amount": 500000, "price": 80},
+                        5: {"type": "food", "amount": 10000, "price": 15},
+                        6: {"type": "food", "amount": 22500, "price": 30},
+                        7: {"type": "food", "amount": 70000, "price": 80},
+                    }
+                    
+                    if treasure_id in treasures_db:
+                        treasure = treasures_db[treasure_id]
+                        res_type = treasure["type"]
+                        amount = treasure["amount"]
+                        price = treasure["price"]
+                        
+                        if player_data['playerInfo']['cash'] >= price:
+                            player_data['playerInfo']['cash'] -= price
+
+                            if res_type == "food":
+                                player_data['playerInfo']['food'] += amount
+                            elif res_type == "gold":
+                                player_data['playerInfo']['gold'] += amount
+                                
+                            print(f"   [BUY_TREASURE_POPUP OK] Tesoro {treasure_id} comprado: +{amount} {res_type} por -{price} gemas.")
+                        else:
+                            print(f"   [!] Error: Cash insuficiente para el tesoro {treasure_id}. Cash actual: {player_data['playerInfo']['cash']}")
+                    else:
+                        print(f"   [!] Error: El ID de tesoro {treasure_id} no está registrado en el diccionario del servidor.")
+
+                elif cmd == 'complete_collection':
+                    collection_id = int(args[0])
+
+                    if 'privateState' not in player_data:
+                        player_data['privateState'] = {}
+                    if 'completedCollection' not in player_data['privateState']:
+                        player_data['privateState']['completedCollection'] = []
+
+                    if collection_id not in player_data['privateState']['completedCollection']:
+                        player_data['privateState']['completedCollection'].append(collection_id)
+
+                        collections_list = game_config.get('collections', [])
+                        collection_found = None
+                        
+                        for col in collections_list:
+                            if col.get('id') == collection_id:
+                                collection_found = col
+                                break
+
+                        if collection_found:
+                            rewards = collection_found.get('reward', {})
+                            col_name = collection_found.get('name', f"Colección {collection_id}")
+
+                            gold_reward = rewards.get("g", 0)
+                            food_reward = rewards.get("f", 0)
+                            cash_reward = rewards.get("c", 0)
+                            xp_reward   = rewards.get("x", 0)
+
+                            player_data['playerInfo']['gold'] += gold_reward
+                            player_data['playerInfo']['food'] += food_reward
+                            player_data['playerInfo']['cash'] += cash_reward
+                            player_data['playerInfo']['xp']   += xp_reward
+                            
+                            print(f"   [COMPLETE_COLLECTION OK] '{col_name}' (ID: {collection_id}) completada.")
+                            print(f"   [+] Recompensas aplicadas -> Oro: +{gold_reward}, Comida: +{food_reward}, Gemas: +{cash_reward}, XP: +{xp_reward}")
+                        else:
+                            print(f"   [!] Aviso: Colección {collection_id} registrada, pero no existe ese ID en get_game_config.json.")
+                    else:
+                        print(f"   [!] Aviso: El jugador ya había completado la colección {collection_id}.")
+
+                elif cmd == 'dragonarium_push':
+                    dragon_id = int(args[0])
+
+                    if 'dragonariumSlot' not in player_data['privateState'] or len(player_data['privateState'].get('dragonariumSlot', [])) < 5:
+                        player_data['privateState']['dragonariumSlot'] = [2, 2, 2, 1, 1]
+
+                    if 'dragonarium' not in player_data['privateState'] or len(player_data['privateState'].get('dragonarium', [])) < 5:
+                        player_data['privateState']['dragonarium'] = [[], [], [], [], []]
+
+                    active_dragons = player_data.get('map', {}).get('dragons', [])
+                    dragon_to_move = None
+                    
+                    for d in active_dragons:
+                        if d.get('id') == dragon_id:
+                            dragon_to_move = d
+                            break
+                            
+                    if dragon_to_move:
+                        dragon_type = dragon_to_move.get('type')
+                        category_index = 0
+                        
+                        items_source = game_config.get('items', [])
+                        item_data = None
+                        
+                        for item in items_source:
+                            if item.get('id') == dragon_type:
+                                item_data = item
+                                break
+
+                        if item_data:
+                            attributes = item_data.get('attributes', [])
+
+                            if 'pu' in attributes:
+                                category_index = 4
+                            elif 'l' in attributes:
+                                category_index = 3
+                            elif 'd' in attributes:
+                                category_index = 2
+                            elif 'm' in attributes:
+                                category_index = 1
+                            else:
+                                category_index = 0
+
+                        old_habitat = dragon_to_move.get('habitatId')
+                        dragon_to_move['habitatId'] = 0
+
+                        player_data['privateState']['dragonarium'][category_index].append(dragon_to_move)
+                        player_data['map']['dragons'].remove(dragon_to_move)
+                        
+                        dragon_name = dragon_to_move.get('name', 'Desconocido')
+                        print(f"   [DRAGONARIUM_PUSH OK] Dragón '{dragon_name}' (ID Único: {dragon_id}, Type: {dragon_type}).")
+                        print(f"                         Movido del Hábitat {old_habitat} a Pestaña: {category_index}.")
+                    else:
+                        print(f"   [!] Error: No se encontró el dragón con ID único {dragon_id} en el mapa del jugador.")
+
+                elif cmd == 'dragonarium_pull':
+                    category_index = int(args[1])
+                    dragon_index = int(args[2])
+                    target_habitat_id = int(args[3])
+
+                    dragonarium = player_data.get('privateState', {}).get('dragonarium', [])
+                    
+                    if 0 <= category_index < len(dragonarium):
+                        tab_dragons = dragonarium[category_index]
+
+                        if 0 <= dragon_index < len(tab_dragons):
+                            dragon_to_move = tab_dragons.pop(dragon_index)
+
+                            dragon_to_move['habitatId'] = target_habitat_id
+
+                            if 'map' not in player_data:
+                                player_data['map'] = {}
+                            if 'dragons' not in player_data['map']:
+                                player_data['map']['dragons'] = []
+
+                            player_data['map']['dragons'].append(dragon_to_move)
+                            
+                            dragon_name = dragon_to_move.get('name', 'Desconocido')
+                            dragon_uniq_id = dragon_to_move.get('id', 'S/D')
+                            
+                            print(f"   [DRAGONARIUM_PULL OK] Dragón '{dragon_name}' (ID Único: {dragon_uniq_id}) extraído con éxito.")
+                            print(f"                         Origen: Pestaña {category_index}, Posición {dragon_index} -> Destino: Hábitat {target_habitat_id}")
+                        else:
+                            print(f"   [!] Error: El índice de dragón {dragon_index} está fuera de rango para la pestaña {category_index}.")
+                    else:
+                        print(f"   [!] Error: El índice de pestaña {category_index} no existe en el Dragonario.")
+
+                elif cmd == 'dragonarium_add':
+                    DRAGONARIUM_COSTS = [
+                        2,
+                        2,
+                        3,
+                        4,
+                        5
+                    ]
+                    
+                    slot_index = int(args[0])
+                    
+                    nombres_slots = {
+                        0: "Elemental",
+                        1: "Metal",
+                        2: "Dark",
+                        3: "Legendary",
+                        4: "Pure"
+                    }
+
+                    dragonarium_cost = DRAGONARIUM_COSTS[slot_index]
+
+                    player_data['playerInfo']['cash'] -= dragonarium_cost
+
+                    nombre_slot = nombres_slots.get(slot_index, f"Desconocido ({slot_index})")
+                    
+                    if 'dragonariumSlot' not in player_data['privateState'] or len(player_data['privateState'].get('dragonariumSlot', [])) < 5:
+                        player_data['privateState']['dragonariumSlot'] = [2, 2, 2, 1, 1]
+                        
+                    slots = player_data['privateState']['dragonariumSlot']
+
+                    if 0 <= slot_index < len(slots):
+                        slots[slot_index] += 1
+                        
+                        print(f"   [DRAGONARIUM ADD OK] Pestaña {nombre_slot} se añadió un espacio con éxito.")
+                        print(f"                        Estado actual del slot {nombre_slot}: {slots[slot_index]} espacios")
+                        print(f"                        Gemas restantes: {player_data['playerInfo']['cash']}")
+                    else:
+                        print(f"   [!] Error: El índice de slot {slot_index} está fuera de rango para el Dragonario.")
+                else:
+                    comandos_ignorados.append(cmd)
+                    
                 response_results.append({
                     "result": cmd_result,
                     "number": cmd_number,
@@ -1359,6 +1972,14 @@ def packet_handler():
             save_player(player_data, user_id)
             current_time = int(time.time())
             player_data['timestamp'] = current_time
+            print("")
+            if comando_valido_procesado:
+                print(f"[+] Juego guardado para usuario {user_id}...")
+            else:
+                print(f"[~] No se aplicaron cambios porque los comandos recibidos no están añadidos: {comandos_ignorados}")
+
+            if user_id in jugadores_sse:
+                jugadores_sse[user_id].put("JUEGO_GUARDADO")
             
         except Exception as e:
             print(f"[!] Error procesando packet.php: {e}")
@@ -1371,7 +1992,6 @@ def packet_handler():
     }
 
     signed_response = sign_packet(response_data)
-    
     return sign_packet(response_data)
 
 print("[+] [MINIJUEGOS] Cargando librería de minijuegos...")
