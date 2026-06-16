@@ -5,6 +5,15 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
     <style>
+		@keyframes tripleBlink {
+            0%, 100% { border-color: transparent; box-shadow: inset 0 0 0px rgba(0, 255, 157, 0); }
+            50% { border-color: #00ff9d; box-shadow: inset 0 0 65px rgba(120, 219, 255, 0.6); }
+        }
+
+        body.save-pulse {
+            animation: tripleBlink 0.6s ease-in-out 3;
+        }
+		
 		html, body {
 			width: 100%;
 			height: 100%;
@@ -92,7 +101,6 @@
 </head>
 <body>
 
-<!-- Loading screen -->
 <div id="loadingScreen" class="loading-screen">
     <div class="dragon">&#128009;</div>
     <h1>DRAGON CITY</h1>
@@ -111,6 +119,36 @@
 </div>
 
 <script type="text/javascript">
+	var evtSource; // Variable global para el túnel
+    var toastTimeout;
+
+    function iniciarSSE() {
+        if (typeof fb_sig_user === 'undefined' || fb_sig_user === null || fb_sig_user === '') {
+            console.error("[!] Error: No se puede iniciar SSE porque fb_sig_user no tiene valor.");
+            return;
+        }
+
+        console.log("%c[SSE] Iniciando túnel para el usuario: " + fb_sig_user, "color: #00ff9d;");
+
+        evtSource = new EventSource('/stream?USERID=' + fb_sig_user);
+        evtSource.onmessage = function(event) {
+            if (event.data === "JUEGO_GUARDADO") {
+                document.body.classList.remove('save-pulse');
+                void document.body.offsetWidth;
+                document.body.classList.add('save-pulse');
+
+                setTimeout(function() {
+                    document.body.classList.remove('save-pulse');
+                }, 2000);
+                
+                console.log('%c[Sistema] Guardado detectado: Parpadeo triple ejecutado.', 'color:#00ff9d;');
+            }
+        };
+
+        evtSource.onerror = function(err) {
+            console.error("[!] Se perdió la conexión SSE con el servidor. Reintentando...");
+        };
+    }
 
     function getUrlParam(param) {
         var urlParams = new URLSearchParams(window.location.search);
@@ -136,7 +174,7 @@
         "offer_type":      "0",
         "fb_promo_uri":    "",
         "spdebug":         "1",
-		"fb_sig_friends":  "21012395"
+		"fb_sig_friends":  "100000030"
     };
 
     function embedGame() {
@@ -161,6 +199,7 @@
             document.getElementById('flashContent').style.display   = 'block';
             document.getElementById('challengeWrapper').style.display = 'block';
             embedGame();
+			iniciarSSE();
         }, 1800);
     };
 
