@@ -7,7 +7,7 @@ original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
 [![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)]()
 [![Flask](https://img.shields.io/badge/Flask-Servidor_Local-lightgrey)]()
-[![Comandos](https://img.shields.io/badge/Comandos_Implementados-30%2F104-yellow)]()
+[![Comandos](https://img.shields.io/badge/Comandos_Implementados-46%2F104-yellow)]()
 
 ---
 
