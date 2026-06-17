@@ -38,7 +38,7 @@ El servidor local es funcional y permite cargar el juego.
 | Módulo | Estado |
 |---|---|
 | Motor de Cría | ✅ Funcional |
-| Comandos (`packets.php`) | ⚠️ 30 / 104 implementados |
+| Comandos (`packets.php`) | ⚠️ 46 / 104 implementados |
 | Minijuego: Reflejo del Dragón | ✅ Funcional |
 | Minijuego: Memoria | ❌ En desarrollo |
 | Minijuego: Tesoro | ❌ En desarrollo |
