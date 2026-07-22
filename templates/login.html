@@ -184,7 +184,6 @@
     <div class="section">
         <label>PERFILES GUARDADOS</label>
         <div id="profile-list" class="profile-list">
-            <!-- Se llena con JavaScript -->
         </div>
     </div>
 	
@@ -251,27 +250,15 @@
 	let pendingDeleteIndex = null;
 	
 	const SWF_VERSIONS = [
-		{ label: "0.6.0", 				file: "Base_sec_0.6.0.swf" },
-		{ label: "0.6.1", 				file: "Base_sec_0.6.1.swf" },
 		{ label: "0.6.7c - Flashpoint", file: "Base_sec_0.6.7c - Flashpoint.swf" },
 		{ label: "0.6.7c",              file: "Base_sec_0.6.7c.swf" },
 		{ label: "0.6.9",               file: "Base_sec_0.6.9.swf" },
-		{ label: "0.7.0",               file: "Base_sec_0.7.0.swf" },
-		{ label: "0.7.1",               file: "Base_sec_0.7.1.swf" },
-		{ label: "0.7.2",               file: "Base_sec_0.7.2.swf" },
-		{ label: "0.7.3",               file: "Base_sec_0.7.3.swf" },
-		{ label: "0.7.4",               file: "Base_sec_0.7.5.swf" },
 		{ label: "0.7.6",               file: "Base_sec_0.7.6.swf" },
 		{ label: "0.7.9",               file: "Base_sec_0.7.9.swf" },
-		{ label: "0.8.0",               file: "Base_sec_0.8.0.swf" },
-		{ label: "0.8.1",               file: "Base_sec_0.8.1.swf" },
-		{ label: "0.8.3",               file: "Base_sec_0.8.3.swf" },
-		{ label: "0.8.4",               file: "Base_sec_0.8.8.swf" },
 		{ label: "0.8.9",               file: "Base_sec_0.8.9.swf" },
 		{ label: "1.0.0",               file: "Base_sec_1.0.0.swf" },
 		{ label: "1.0.1",               file: "Base_sec_1.0.1.swf" },
-		{ label: "1.1.9",               file: "Base_sec_1.1.9.swf" },
-		{ label: "1.5.5",               file: "Base_sec_1.5.5.swf" }
+		{ label: "1.1.9",               file: "Base_sec_1.1.9.swf" }
 	];
 	
 	let globalVersion = localStorage.getItem('dragoncity_swf_version') || SWF_VERSIONS[0].file;
@@ -300,7 +287,6 @@
 		localStorage.setItem('dragoncity_swf_version', filename);
 	}
 
-    // ── localStorage helpers ──────────────────────────────────────
     function generateFbSigUser() {
         return Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
     }
@@ -313,8 +299,7 @@
     function saveProfiles() {
         localStorage.setItem('dragoncity_profiles', JSON.stringify(profiles));
     }
-
-    // ── JSON export ───────────────────────────────────────────────
+	
     window.exportJSON = async function () {
         if (profiles.length === 0) {
             showToast('No hay perfiles para guardar.', true);
@@ -352,7 +337,6 @@
             return;
         } catch (e) { /* sigue al fallback */ }
 
-        // 3️⃣ Fallback: mostrar el JSON en un modal para copiar y pegar
         showJsonFallback(jsonText);
     };
 
@@ -378,7 +362,6 @@
         modal.style.display = 'flex';
     }
 
-    // ── JSON import ───────────────────────────────────────────────
     window.importJSON = function (event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -415,7 +398,6 @@
         reader.readAsText(file);
     };
 
-    // ── Render ────────────────────────────────────────────────────
     function renderProfiles() {
 		const list = document.getElementById('profile-list');
 		list.innerHTML = '';
