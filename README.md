@@ -7,7 +7,7 @@ original en Adobe Flash (2012–2020), mantenido vivo por la comunidad.
 [![Estado](https://img.shields.io/badge/Estado-En_Desarrollo-orange)]()
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)]()
 [![Flask](https://img.shields.io/badge/Flask-Servidor_Local-lightgrey)]()
-[![Comandos](https://img.shields.io/badge/Comandos_Implementados-46%2F104-yellow)]()
+[![Comandos](https://img.shields.io/badge/Comandos_Implementados-60%2F104-yellow)]()
 
 ---
 
@@ -38,7 +38,7 @@ El servidor local es funcional y permite cargar el juego.
 | Módulo | Estado |
 |---|---|
 | Motor de Cría | ✅ Funcional |
-| Comandos (`packets.php`) | ⚠️ 46 / 104 implementados |
+| Comandos (`packets.php`) | ⚠️ 60 / 104 implementados |
 | Minijuego: Reflejo del Dragón | ✅ Funcional |
 | Minijuego: Memoria | ❌ En desarrollo |
 | Minijuego: Tesoro | ❌ En desarrollo |
