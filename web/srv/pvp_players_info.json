@@ -1,0 +1,422 @@
+{
+  "100000050": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1017,
+          "xp": 16,
+          "habitatId": 0,
+          "name": "Dragon 1",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1001,
+          "xp": 16,
+          "habitatId": 0,
+          "name": "Dragon 2",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1001,
+          "xp": 16,
+          "habitatId": 0,
+          "name": "Dragon 3",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  },
+  "100000051": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1016,
+          "xp": 91,
+          "habitatId": 0,
+          "name": "Terra",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1055,
+          "xp": 121,
+          "habitatId": 0,
+          "name": "Rex",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          }
+        ]
+      }
+    }
+  },
+  "100000052": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1050,
+          "xp": 95,
+          "habitatId": 0,
+          "name": "Terra",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1048,
+          "xp": 127,
+          "habitatId": 0,
+          "name": "Terra",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          }
+        ]
+      }
+    }
+  },
+  "100000053": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1212,
+          "xp": 41,
+          "habitatId": 0,
+          "name": "Rex",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1075,
+          "xp": 65,
+          "habitatId": 0,
+          "name": "Spike",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1221,
+          "xp": 104,
+          "habitatId": 0,
+          "name": "Rex",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  },
+  "100000054": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1122,
+          "xp": 52,
+          "habitatId": 0,
+          "name": "Volt",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1135,
+          "xp": 140,
+          "habitatId": 0,
+          "name": "Frost",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1080,
+          "xp": 89,
+          "habitatId": 0,
+          "name": "Spike",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  },
+  "100000055": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1032,
+          "xp": 72,
+          "habitatId": 0,
+          "name": "Blaze",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1114,
+          "xp": 77,
+          "habitatId": 0,
+          "name": "Smaug",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1029,
+          "xp": 60,
+          "habitatId": 0,
+          "name": "Rex",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  },
+  "100000056": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1042,
+          "xp": 95,
+          "habitatId": 0,
+          "name": "Blaze",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1061,
+          "xp": 65,
+          "habitatId": 0,
+          "name": "Nova",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1176,
+          "xp": 54,
+          "habitatId": 0,
+          "name": "Volt",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  },
+  "100000057": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1201,
+          "xp": 21,
+          "habitatId": 0,
+          "name": "Spike",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1101,
+          "xp": 110,
+          "habitatId": 0,
+          "name": "Smaug",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          }
+        ]
+      }
+    }
+  },
+  "100000058": {
+    "map": {
+      "dragons": [
+        {
+          "id": 1,
+          "type": 1021,
+          "xp": 65,
+          "habitatId": 0,
+          "name": "Blaze",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 2,
+          "type": 1016,
+          "xp": 32,
+          "habitatId": 0,
+          "name": "Blaze",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        },
+        {
+          "id": 3,
+          "type": 1067,
+          "xp": 76,
+          "habitatId": 0,
+          "name": "Frost",
+          "ts": 0,
+          "work_id": [],
+          "attack": []
+        }
+      ]
+    },
+    "privateState": {
+      "teams": {
+        "pvp": [
+          {
+            "id": 1
+          },
+          {
+            "id": 2
+          },
+          {
+            "id": 3
+          }
+        ]
+      }
+    }
+  }
+}
