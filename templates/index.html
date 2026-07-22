@@ -64,9 +64,28 @@
 
         /* Challenge button */
         #challengeWrapper {
-            text-align: center;
-            padding: 18px 10px 8px;
-        }
+			display: none;
+			grid-template-columns: 1fr auto 1fr;
+			align-items: center;
+			gap: 20px;
+			padding: 18px 30px 8px;
+		}
+
+		#marketBtn {
+			justify-self: start;
+		}
+		
+		#toolsBtn {
+			justify-self: end;
+		}
+
+		@media (max-width: 600px) {
+			#challengeWrapper {
+				display: flex !important;
+				flex-direction: column;
+				align-items: center;
+			}
+		}
 
         #challengeBtn {
             display: inline-flex;
@@ -97,6 +116,62 @@
         }
 
         #challengeBtn:active { transform: scale(0.98); }
+
+        #toolsBtn {
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+			padding: 15px 28px;
+			background: linear-gradient(135deg, #001f14 0%, #003d26 50%, #001f14 100%);
+			border: 2px solid #00ff9d;
+			color: #00ff9d;
+			font-family: Georgia, serif;
+			font-size: 16px;
+			font-weight: bold;
+			letter-spacing: 1px;
+			cursor: pointer;
+			border-radius: 6px;
+			box-shadow: 0 0 20px #00ff9d55, 0 0 44px #00ff9d22,
+						inset 0 0 18px #00ff9d08;
+			text-shadow: 0 0 10px #00ff9d;
+			transition: all 0.22s ease;
+		}
+
+        #toolsBtn:hover {
+            background: linear-gradient(135deg, #002d1c 0%, #005235 50%, #002d1c 100%);
+            box-shadow: 0 0 32px #00ff9d99, 0 0 64px #00ff9d33;
+            transform: scale(1.02);
+        }
+
+        #toolsBtn:active { transform: scale(0.98); }
+
+        #marketBtn {
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+			padding: 15px 28px;
+			background: linear-gradient(135deg, #001f14 0%, #003d26 50%, #001f14 100%);
+			border: 2px solid #00ff9d;
+			color: #00ff9d;
+			font-family: Georgia, serif;
+			font-size: 16px;
+			font-weight: bold;
+			letter-spacing: 1px;
+			cursor: pointer;
+			border-radius: 6px;
+			box-shadow: 0 0 20px #00ff9d55, 0 0 44px #00ff9d22,
+						inset 0 0 18px #00ff9d08;
+			text-shadow: 0 0 10px #00ff9d;
+			transition: all 0.22s ease;
+		}
+
+        #marketBtn:hover {
+            background: linear-gradient(135deg, #002d1c 0%, #005235 50%, #002d1c 100%);
+            box-shadow: 0 0 32px #00ff9d99, 0 0 64px #00ff9d33;
+            transform: scale(1.02);
+        }
+
+        #marketBtn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -112,9 +187,15 @@
 
 <div id="flashContent" align="center" style="display:none;"></div>
 
-<div id="challengeWrapper" style="display:none;">
+<div id="challengeWrapper">
+    <button id="marketBtn" onclick="openMarket()">
+        &#127942; &nbsp;Mercado
+    </button>
     <button id="challengeBtn" onclick="openMinigames()">
         &#128142; &nbsp;Participa en desaf&#237;os para obtener recompensas&nbsp; &#8250;
+    </button>
+    <button id="toolsBtn" onclick="openTools()">
+        &#9881;&#65039; &nbsp;Herramientas
     </button>
 </div>
 
@@ -157,23 +238,25 @@
 
     var fb_sig_user = getUrlParam('fb_sig_user') || "645751329";
     var player_name = getUrlParam('player_name')  || "DragonMaster";
+	var swf_version  = getUrlParam('swf_version')  || "Base_sec_0.6.7c.swf";
 
     document.getElementById('loadingText').innerHTML =
         'Cargando perfil: <strong style="color:#ffff00;">' + player_name + '</strong><br>' +
         '<small>fb_sig_user: ' + fb_sig_user.substring(0, 12) + '...</small>';
 
     var flashVars = {
-        "swftoload":       "flash/Base_sec_0.6.7c.swf",
+        "swftoload":       "flash/" + swf_version,
         "use_assets_opt":  true,
         "urlServicesBase": "http://static.socialpointgames.com/static/dragoncity/",
         "fb_sig_user":     fb_sig_user,
-        "language":        "es",
-        "skiphash12341":   false,
+        "language":        "en",
+        "skiphash12341":   "",
+		"user_key":        "12304531",
         "getText":         "",
-        "push_time":       "30",
-        "offer_type":      "0",
+        "push_time":       "1",
+        "offer_type":      "1",
         "fb_promo_uri":    "",
-        "spdebug":         "1",
+        "spdebug":         "0",
 		"fb_sig_friends":  "100000030"
     };
 
@@ -197,7 +280,7 @@
         setTimeout(function() {
             document.getElementById('loadingScreen').style.display  = 'none';
             document.getElementById('flashContent').style.display   = 'block';
-            document.getElementById('challengeWrapper').style.display = 'block';
+            document.getElementById('challengeWrapper').style.display = 'grid';
             embedGame();
 			iniciarSSE();
         }, 1800);
@@ -215,6 +298,32 @@
             'toolbar=no,menubar=no,location=no,status=no'
         );
 
+        if (popup) { popup.focus(); }
+        else { alert('Permite ventanas emergentes para este sitio e intenta de nuevo.'); }
+    }
+
+    function openMarket() {
+        var url = '/market.html'
+                + '?fb_sig_user=' + encodeURIComponent(fb_sig_user)
+                + '&player_name=' + encodeURIComponent(player_name);
+
+        var popup = window.open(
+            url,
+            'dc_market',
+            'width=1020,height=780,resizable=no,scrollbars=yes,' +
+            'toolbar=no,menubar=no,location=no,status=no'
+        );
+        if (popup) { popup.focus(); }
+        else { alert('Permite ventanas emergentes para este sitio e intenta de nuevo.'); }
+    }
+
+    function openTools() {
+        var popup = window.open(
+            '/tools.html',
+            'dc_tools',
+            'width=600,height=700,resizable=no,scrollbars=yes,' +
+            'toolbar=no,menubar=no,location=no,status=no'
+        );
         if (popup) { popup.focus(); }
         else { alert('Permite ventanas emergentes para este sitio e intenta de nuevo.'); }
     }
