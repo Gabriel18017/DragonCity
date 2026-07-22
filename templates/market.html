@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon City — Mercado</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0a1f1a;
+            color: #00ff9d;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 24px 20px 40px;
+        }
+
+        /* ── Cabecera ── */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            max-width: 980px;
+            margin: 0 auto 18px;
+            flex-wrap: wrap;
+        }
+
+        .info-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(160deg, #0d2b20 0%, #0f3325 100%);
+            border: 1px solid #1e5c3a;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 13px;
+            color: #aaffcc;
+            white-space: nowrap;
+        }
+
+        .info-pill .icon { font-size: 20px; }
+        .info-pill strong { color: #ffff00; text-shadow: 1px 1px 0 #000; }
+
+        .header {
+            text-align: center;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .header .dragon-icon { font-size: 40px; }
+
+        .header h1 {
+            color: #ffff00;
+            text-shadow: 3px 3px 0 #000;
+            font-size: 28px;
+            letter-spacing: 2px;
+            margin: 4px 0 2px;
+        }
+
+        .header h2 {
+            color: #ffff00;
+            font-size: 20px;
+            letter-spacing: 3px;
+            margin-bottom: 2px;
+        }
+
+        .header p {
+            color: #55cc88;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1a4030;
+            margin: 20px auto 26px;
+            max-width: 980px;
+        }
+
+        /* ── Grid de ofertas ── */
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 820px) {
+            .market-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 460px) {
+            .market-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Tarjeta de oferta ── */
+        .offer-card {
+            background: linear-gradient(160deg, #0d2b20 0%, #0f3325 100%);
+            border: 1px solid #1e5c3a;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+
+        .offer-card:hover { border-color: #00ff9d66; }
+
+        .offer-card .offer-title {
+            background: #072216;
+            color: #ffff00;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 8px;
+            letter-spacing: 0.3px;
+            text-shadow: 1px 1px 0 #000;
+            border-bottom: 1px solid #1e5c3a;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .offer-card .offer-img-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            min-height: 120px;
+            background: #06140f;
+        }
+
+        .offer-card .offer-img-wrap img {
+            max-width: 100%;
+            max-height: 100px;
+            filter: drop-shadow(0 0 10px #00ff9d33);
+        }
+
+        .offer-card .offer-amount {
+            text-align: center;
+            font-size: 12px;
+            color: #77ccaa;
+            padding: 0 8px 8px;
+        }
+
+        .offer-card .offer-footer {
+            padding: 10px 10px 12px;
+            border-top: 1px solid #1e5c3a;
+        }
+
+        .offer-cost {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #ffff00;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .redeem-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 9px 10px;
+            background: linear-gradient(135deg, #001f14 0%, #003d26 50%, #001f14 100%);
+            border: 2px solid #00ff9d;
+            color: #00ff9d;
+            font-family: Georgia, serif;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 0 14px #00ff9d33, inset 0 0 10px #00ff9d08;
+            text-shadow: 0 0 6px #00ff9d;
+            transition: all 0.2s ease;
+        }
+
+        .redeem-btn:hover {
+            background: linear-gradient(135deg, #002d1c 0%, #005235 50%, #002d1c 100%);
+            box-shadow: 0 0 22px #00ff9d77;
+            transform: scale(1.02);
+        }
+
+        .redeem-btn:active { transform: scale(0.97); }
+
+        .redeem-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .offer-card.sold .offer-img-wrap { opacity: 0.35; }
+        .offer-card.sold .offer-title { opacity: 0.5; }
+
+        /* ── Mensaje / toast ── */
+        .toast {
+            display: none;
+            max-width: 980px;
+            margin: 18px auto 0;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        .toast.success {
+            display: block;
+            border: 1px solid #00ff9d88;
+            background: #041410;
+            color: #aaffcc;
+        }
+
+        .toast.error {
+            display: block;
+            border: 1px solid #ff4444aa;
+            background: #1a0808;
+            color: #ffaaaa;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-msg, .empty-msg {
+            text-align: center;
+            color: #55cc88;
+            font-size: 13px;
+            padding: 40px 0;
+            grid-column: 1 / -1;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #2a6644;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="info-pill">
+            <span class="icon">&#128100;</span>
+            <span>Usuario: <strong id="playerNameLabel">—</strong></span>
+        </div>
+
+        <div class="header">
+            <div class="dragon-icon">&#128009;</div>
+            <h1>DRAGON CITY</h1>
+            <h2>MERCADO</h2>
+            <p>Canjea tus puntos por recompensas exclusivas</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+            <div class="info-pill">
+                <span class="icon">&#127942;</span>
+                <span>Puntos: <strong id="pointsLabel">—</strong></span>
+            </div>
+            <div class="info-pill">
+                <span class="icon">&#9200;</span>
+                <span>Renueva en: <strong id="refreshLabel">—</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="market-grid" id="marketGrid">
+        <div class="loading-msg" id="loadingMsg">
+            <span class="spinner"></span> Cargando mercado...
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="footer">Dragon City &mdash; Mercado de Puntos &mdash; Uso exclusivo del jugador</div>
+
+<script>
+    function getUrlParam(param) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    var fb_sig_user = getUrlParam('fb_sig_user') || "645751329";
+    var player_name = getUrlParam('player_name')  || "DragonMaster";
+
+    document.getElementById('playerNameLabel').textContent = player_name;
+
+    var refreshCountdown = null;
+    var countdownInterval = null;
+
+    function resourceImage(type, amount) {
+        if (type === 'gold') {
+            return amount <= 1500000 ? '/assets/mercado/Gold1.png' : '/assets/mercado/Gold2.png';
+        }
+        if (type === 'food') {
+            return amount <= 1500000 ? '/assets/mercado/Food1.png' : '/assets/mercado/Food2.png';
+        }
+        if (type === 'gems') {
+            return amount <= 750 ? '/assets/mercado/Gems1.png' : '/assets/mercado/Gems2.png';
+        }
+        return '';
+    }
+
+    function dragonImage(img_name) {
+        return '/assets/thumbs/' + img_name + '_1' + '.jpg';
+    }
+
+    function formatAmount(n) {
+        return n.toLocaleString('es-ES');
+    }
+
+    function offerTitle(offer) {
+        if (offer.type === 'gold')  return 'Saco de Oro (' + formatAmount(offer.amount) + ')';
+        if (offer.type === 'food')  return 'Ración de Comida (' + formatAmount(offer.amount) + ')';
+        if (offer.type === 'gems')  return 'Paquete de Gemas (' + formatAmount(offer.amount) + ')';
+        if (offer.type === 'dragon') return offer.name;
+        if (offer.type === 'habitat') return offer.name;
+        return offer.name || 'Oferta';
+    }
+
+    function offerImage(offer) {
+        if (offer.type === 'dragon') return dragonImage(offer.img);
+        if (offer.type === 'habitat') return '/assets/thumbs/' + offer.img + '.jpg';
+        return resourceImage(offer.type, offer.amount);
+    }
+
+    function offerAmountLabel(offer) {
+        if (offer.type === 'dragon' || offer.type === 'habitat') return '';
+        return formatAmount(offer.amount) + ' unidades';
+    }
+
+    function renderMarket(data) {
+        document.getElementById('pointsLabel').textContent = formatAmount(data.achievement_points);
+        document.getElementById('playerNameLabel').textContent = data.player_name || player_name;
+
+        refreshCountdown = data.next_refresh_seconds;
+        startCountdown();
+
+        var grid = document.getElementById('marketGrid');
+        grid.innerHTML = '';
+
+        if (!data.offers || data.offers.length === 0) {
+            grid.innerHTML = '<div class="empty-msg">No hay ofertas disponibles en este momento.</div>';
+            return;
+        }
+
+        data.offers.forEach(function(offer) {
+            var card = document.createElement('div');
+            card.className = 'offer-card' + (offer.sold ? ' sold' : '');
+            card.id = 'offer-' + offer.id;
+
+            var canAfford = data.achievement_points >= offer.cost;
+
+            card.innerHTML =
+                '<div class="offer-title">' + offerTitle(offer) + '</div>' +
+                '<div class="offer-img-wrap"><img src="' + offerImage(offer) + '" alt=""></div>' +
+                '<div class="offer-amount">' + offerAmountLabel(offer) + '</div>' +
+                '<div class="offer-footer">' +
+                    '<div class="offer-cost">&#127942; ' + formatAmount(offer.cost) + ' Puntos</div>' +
+                    '<button class="redeem-btn" onclick="redeem(' + offer.id + ')" ' +
+                        (offer.sold || !canAfford ? 'disabled' : '') + '>' +
+                        (offer.sold ? 'Canjeado' : 'Canjear') +
+                    '</button>' +
+                '</div>';
+
+            grid.appendChild(card);
+        });
+    }
+
+    function startCountdown() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        updateCountdownLabel();
+        countdownInterval = setInterval(function() {
+            if (refreshCountdown > 0) {
+                refreshCountdown--;
+                updateCountdownLabel();
+            } else {
+                clearInterval(countdownInterval);
+                loadMarket();
+            }
+        }, 1000);
+    }
+
+    function updateCountdownLabel() {
+        var h = Math.floor(refreshCountdown / 3600);
+        var m = Math.floor((refreshCountdown % 3600) / 60);
+        var s = refreshCountdown % 60;
+        var pad = function(n) { return n.toString().padStart(2, '0'); };
+        document.getElementById('refreshLabel').textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+
+    function showToast(message, isError) {
+        var toast = document.getElementById('toast');
+        toast.className = 'toast ' + (isError ? 'error' : 'success');
+        toast.textContent = message;
+        setTimeout(function() {
+            toast.className = 'toast';
+        }, 3500);
+    }
+
+    async function loadMarket() {
+        try {
+            const res = await fetch('/market_data?fb_sig_user=' + encodeURIComponent(fb_sig_user) +
+                                     '&player_name=' + encodeURIComponent(player_name));
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'No se pudo cargar el mercado');
+            renderMarket(data);
+        } catch (err) {
+            document.getElementById('marketGrid').innerHTML =
+                '<div class="empty-msg">Error al cargar el mercado: ' + err.message + '</div>';
+        }
+    }
+
+    async function redeem(offerId) {
+        var btn = document.querySelector('#offer-' + offerId + ' .redeem-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+
+        try {
+            const res = await fetch('/market/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fb_sig_user: fb_sig_user, offer_id: offerId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'No se pudo canjear la oferta');
+
+            showToast('¡Canje exitoso! ' + (data.message || ''), false);
+            loadMarket();
+
+        } catch (err) {
+            showToast(err.message, true);
+            if (btn) { btn.disabled = false; btn.textContent = 'Canjear'; }
+        }
+    }
+
+    loadMarket();
+</script>
+
+</body>
+</html>

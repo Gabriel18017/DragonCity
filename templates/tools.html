@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon City — Herramientas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0a1f1a;
+            color: #00ff9d;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 30px 20px 40px;
+        }
+
+        /* ── Cabecera ── */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header .dragon-icon { font-size: 48px; }
+
+        .header h1 {
+            color: #ffff00;
+            text-shadow: 3px 3px 0 #000;
+            font-size: 32px;
+            letter-spacing: 2px;
+            margin: 6px 0 4px;
+        }
+
+        .header p {
+            color: #55cc88;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1a4030;
+            margin: 0 auto 30px;
+            max-width: 500px;
+        }
+
+        /* ── Grid de tarjetas ── */
+        .tools-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* ── Tarjeta individual ── */
+        .tool-card {
+            background: linear-gradient(160deg, #0d2b20 0%, #0f3325 100%);
+            border: 1px solid #1e5c3a;
+            border-radius: 10px;
+            padding: 22px 24px;
+            transition: border-color 0.2s;
+        }
+
+        .tool-card:hover { border-color: #00ff9d44; }
+
+        .tool-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .tool-card .card-icon { font-size: 28px; }
+
+        .tool-card h2 {
+            color: #ffff00;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .tool-card p.desc {
+            color: #77ccaa;
+            font-size: 13px;
+            line-height: 1.55;
+            margin-bottom: 18px;
+        }
+
+        /* ── Botón acción (mismo look que challengeBtn) ── */
+        .tool-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #001f14 0%, #003d26 50%, #001f14 100%);
+            border: 2px solid #00ff9d;
+            color: #00ff9d;
+            font-family: Georgia, serif;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 0 18px #00ff9d44, inset 0 0 14px #00ff9d08;
+            text-shadow: 0 0 8px #00ff9d;
+            transition: all 0.2s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .tool-btn:hover {
+            background: linear-gradient(135deg, #002d1c 0%, #005235 50%, #002d1c 100%);
+            box-shadow: 0 0 28px #00ff9d88, 0 0 52px #00ff9d22;
+            transform: scale(1.01);
+        }
+
+        .tool-btn:active { transform: scale(0.98); }
+
+        .tool-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Panel de resultado ── */
+        .result-panel {
+            display: none;
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-radius: 8px;
+            border: 1px solid #00ff9d55;
+            background: #041410;
+            animation: fadeSlideIn 0.35s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-panel.success { border-color: #00ff9d88; }
+        .result-panel.error   { border-color: #ff4444aa; }
+
+        .result-panel .result-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .result-panel.success .result-title { color: #00ff9d; text-shadow: 0 0 8px #00ff9d88; }
+        .result-panel.error   .result-title { color: #ff6666; }
+
+        .result-panel .result-body {
+            font-size: 13px;
+            color: #aaffcc;
+            line-height: 1.6;
+        }
+
+        .result-panel .league-count {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 16px;
+            background: #002a1a;
+            border: 1px solid #00ff9d44;
+            border-radius: 4px;
+            color: #ffff00;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid #00ff9d44;
+            border-top-color: #00ff9d;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #2a6644;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="dragon-icon">&#128009;</div>
+        <h1>DRAGON CITY</h1>
+        <p>Panel de Herramientas</p>
+    </div>
+    <hr class="divider">
+
+    <div class="tools-grid">
+
+        <!-- ── Tarjeta: Generar oponentes PvP ── -->
+        <div class="tool-card">
+            <div class="card-header">
+                <span class="card-icon">&#9876;&#65039;</span>
+                <h2>Generar oponentes PvP</h2>
+            </div>
+            <p class="desc">
+                Genera una nueva tanda de 8 oponentes aleatorios para el modo PvP.
+                Cada tanda completa representa una nueva liga. Los dragones asignados
+                a cada oponente se eligen según su nivel de jugador.
+            </p>
+
+            <button class="tool-btn" id="pvpBtn" onclick="generarPvP()">
+                &#9876;&#65039; &nbsp;Generar oponentes PvP
+            </button>
+
+            <div class="result-panel" id="pvpResult">
+                <div class="result-title" id="pvpResultTitle"></div>
+                <div class="result-body" id="pvpResultBody"></div>
+            </div>
+        </div>
+
+        <!-- Aquí se añadirán más herramientas en el futuro -->
+
+    </div>
+
+    <div class="footer">Dragon City &mdash; Herramientas internas &mdash; Uso exclusivo del administrador</div>
+
+<script>
+    async function generarPvP() {
+        const btn    = document.getElementById('pvpBtn');
+        const panel  = document.getElementById('pvpResult');
+        const title  = document.getElementById('pvpResultTitle');
+        const body   = document.getElementById('pvpResultBody');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> &nbsp;Generando...';
+        panel.style.display = 'none';
+        panel.className = 'result-panel';
+
+        try {
+            const res = await fetch('/generate_pvp', { method: 'POST' });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+            const totalEntradas = data.total_opponents;
+            const totalLigas    = Math.floor(totalEntradas / 8);
+
+            panel.className = 'result-panel success';
+            title.textContent = '¡Nueva liga añadida!';
+            body.innerHTML =
+                'Se generaron <strong style="color:#ffff00;">8 nuevos oponentes</strong> para el modo PvP.<br>' +
+                '<span class="league-count">&#127942; Total de ligas activas: ' + totalLigas + '</span>';
+
+        } catch (err) {
+            panel.className = 'result-panel error';
+            title.textContent = 'Error al generar oponentes';
+            body.textContent  = err.message;
+        }
+
+        panel.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '&#9876;&#65039; &nbsp;Generar oponentes PvP';
+    }
+</script>
+
+</body>
+</html>
