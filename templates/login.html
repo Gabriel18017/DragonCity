@@ -187,6 +187,15 @@
             <!-- Se llena con JavaScript -->
         </div>
     </div>
+	
+	<div style="margin: 15px 0; text-align:left;">
+		<label style="color:#aaffcc; font-size:13px; display:block; margin-bottom:4px;">
+			Versión del juego:
+		</label>
+		<select id="global-version-select" onchange="setGlobalVersion(this.value)"
+				style="width:100%; padding:8px; background:#0a1f1a; color:#aaffcc; border:1px solid #00ff9d; border-radius:6px; font-size:14px;">
+		</select>
+	</div>
 
     <button onclick="createNewUser()" class="create-btn">+ CREAR NUEVO USUARIO</button>
 
@@ -203,7 +212,7 @@
 
     <p style="margin-top:14px; font-size:12px; color:#88ffcc; line-height:1.5;">
         Los perfiles también se guardan en el caché del navegador automáticamente.<br>
-        Usa <strong>Guardar</strong> para hacer una copia de seguridad en un archivo .json y <strong>Cargar</strong> para restaurarla.
+        Usa <strong>Guardar perfiles</strong> para hacer una copia de seguridad en un archivo .json y <strong>Cargar perfiles</strong> para restaurarla.
     </p>
 </div>
 
@@ -213,7 +222,7 @@
         <h2 style="color:#ffff00; margin-top:0;">✨ Nuevo Usuario</h2>
         
         <label>NOMBRE DEL JUGADOR</label>
-        <input id="player-name" type="text" placeholder="Ej: Carlos" style="width:100%; margin-bottom:15px;">
+        <input id="player_name" type="text" placeholder="Ej: Carlos" style="width:90%; margin-bottom:15px;">
 
         <div style="text-align:center; margin-top:20px;">
             <button onclick="hideModal()" style="background:#555; padding:12px 25px;">CANCELAR</button>
@@ -221,25 +230,75 @@
         </div>
     </div>
 </div>
+<div id="delete-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:9997;">
+    <div style="background:#1a3c2f; border:4px solid #ff5555; padding:25px; width:420px; border-radius:12px; box-shadow:0 0 30px #ff555577;">
+        <h2 style="color:#ffff00; margin-top:0;">🗑️ Eliminar Perfil</h2>
+        <p style="color:#aaffcc; font-size:15px; line-height:1.5;" id="delete-modal-text">
+            ¿Eliminar este perfil?
+        </p>
+        <div style="text-align:center; margin-top:20px;">
+            <button onclick="cancelDeleteProfile()" style="background:#555; padding:12px 25px;">CANCELAR</button>
+            <button onclick="confirmDeleteProfile()" style="background:#cc3300; box-shadow:0 4px 0 #992200; padding:12px 30px;">ELIMINAR</button>
+        </div>
+    </div>
+</div>
 
-<!-- Toast notification -->
 <div class="toast" id="toast"></div>
 
 <script>
     let profiles = [];
     let selectedIndex = null;
+	let pendingDeleteIndex = null;
+	
+	const SWF_VERSIONS = [
+		{ label: "0.6.0", 				file: "Base_sec_0.6.0.swf" },
+		{ label: "0.6.1", 				file: "Base_sec_0.6.1.swf" },
+		{ label: "0.6.7c - Flashpoint", file: "Base_sec_0.6.7c - Flashpoint.swf" },
+		{ label: "0.6.7c",              file: "Base_sec_0.6.7c.swf" },
+		{ label: "0.6.9",               file: "Base_sec_0.6.9.swf" },
+		{ label: "0.7.0",               file: "Base_sec_0.7.0.swf" },
+		{ label: "0.7.1",               file: "Base_sec_0.7.1.swf" },
+		{ label: "0.7.2",               file: "Base_sec_0.7.2.swf" },
+		{ label: "0.7.3",               file: "Base_sec_0.7.3.swf" },
+		{ label: "0.7.4",               file: "Base_sec_0.7.5.swf" },
+		{ label: "0.7.6",               file: "Base_sec_0.7.6.swf" },
+		{ label: "0.7.9",               file: "Base_sec_0.7.9.swf" },
+		{ label: "0.8.0",               file: "Base_sec_0.8.0.swf" },
+		{ label: "0.8.1",               file: "Base_sec_0.8.1.swf" },
+		{ label: "0.8.3",               file: "Base_sec_0.8.3.swf" },
+		{ label: "0.8.4",               file: "Base_sec_0.8.8.swf" },
+		{ label: "0.8.9",               file: "Base_sec_0.8.9.swf" },
+		{ label: "1.0.0",               file: "Base_sec_1.0.0.swf" },
+		{ label: "1.0.1",               file: "Base_sec_1.0.1.swf" },
+		{ label: "1.1.9",               file: "Base_sec_1.1.9.swf" },
+		{ label: "1.5.5",               file: "Base_sec_1.5.5.swf" }
+	];
+	
+	let globalVersion = localStorage.getItem('dragoncity_swf_version') || SWF_VERSIONS[0].file;
 
     // ── Toast helper ──────────────────────────────────────────────
     function showToast(msg, isError = false) {
         const t = document.getElementById('toast');
         t.textContent = msg;
         t.className = 'toast' + (isError ? ' error' : '');
-        // Force reflow so the transition fires even on repeated calls
+
         void t.offsetWidth;
         t.classList.add('show');
         clearTimeout(t._timer);
         t._timer = setTimeout(() => t.classList.remove('show'), 2800);
     }
+	
+	function renderVersionSelect() {
+		const select = document.getElementById('global-version-select');
+		select.innerHTML = SWF_VERSIONS.map(v =>
+			`<option value="${v.file}" ${globalVersion === v.file ? 'selected' : ''}>${v.label}</option>`
+		).join('');
+	}
+
+	window.setGlobalVersion = function(filename) {
+		globalVersion = filename;
+		localStorage.setItem('dragoncity_swf_version', filename);
+	}
 
     // ── localStorage helpers ──────────────────────────────────────
     function generateFbSigUser() {
@@ -263,7 +322,6 @@
         }
         const jsonText = JSON.stringify(profiles, null, 2);
 
-        // 1️⃣ File System Access API (Chrome/Edge — abre diálogo "Guardar como")
         if (window.showSaveFilePicker) {
             try {
                 const handle = await window.showSaveFilePicker({
@@ -276,12 +334,10 @@
                 showToast('✅ Perfiles guardados correctamente');
                 return;
             } catch (e) {
-                if (e.name === 'AbortError') return; // usuario canceló el diálogo
-                // Si falla por otro motivo, caemos al siguiente método
+                if (e.name === 'AbortError') return;
             }
         }
 
-        // 2️⃣ Descarga por <a> (Firefox y otros)
         try {
             const blob = new Blob([jsonText], { type: 'application/json' });
             const url  = URL.createObjectURL(blob);
@@ -332,14 +388,12 @@
             try {
                 const data = JSON.parse(e.target.result);
 
-                // Basic validation
                 if (!Array.isArray(data)) throw new Error('Formato inválido');
                 data.forEach(p => {
                     if (typeof p.name !== 'string' || typeof p.fb_sig_user !== 'string')
                         throw new Error('Estructura de perfil inválida');
                 });
 
-                // Merge: add only profiles whose fb_sig_user doesn't already exist
                 let added = 0;
                 data.forEach(p => {
                     if (!profiles.find(e => e.fb_sig_user === p.fb_sig_user)) {
@@ -355,7 +409,7 @@
             } catch (err) {
                 showToast('❌ Archivo inválido: ' + err.message, true);
             }
-            // Reset so the same file can be re-imported if needed
+			
             event.target.value = '';
         };
         reader.readAsText(file);
@@ -363,50 +417,108 @@
 
     // ── Render ────────────────────────────────────────────────────
     function renderProfiles() {
-        const list = document.getElementById('profile-list');
-        list.innerHTML = '';
+		const list = document.getElementById('profile-list');
+		list.innerHTML = '';
 
-        if (profiles.length === 0) {
-            list.innerHTML = `<p style="color:#88ffcc; text-align:center; padding:30px;">Aún no tienes perfiles<br><br>¡Crea tu primer usuario!</p>`;
-            document.getElementById('play-button').disabled = true;
-            return;
-        }
+		if (profiles.length === 0) {
+			list.innerHTML = `<p style="color:#88ffcc; text-align:center; padding:30px;">Aún no tienes perfiles<br><br>¡Crea tu primer usuario!</p>`;
+			document.getElementById('play-button').disabled = true;
+			return;
+		}
 
-        profiles.forEach((p, i) => {
-            const div = document.createElement('div');
-            div.className = `profile-item ${i === selectedIndex ? 'selected' : ''}`;
-            div.innerHTML = `
-                <span class="dragon-icon">🐉</span>
-                <div style="flex:1; text-align:left;">
-                    <strong style="color:#ffff00;">${p.name}</strong><br>
-                    <small style="color:#aaffcc;">fb_sig_user: ${p.fb_sig_user.substring(0,10)}...</small>
-                </div>
-                ${i === selectedIndex ? '<span style="color:#ffff00; font-size:24px;">✓</span>' : ''}
-            `;
-            div.onclick = () => selectProfile(i);
-            list.appendChild(div);
-        });
+		profiles.forEach((p, i) => {
+			const div = document.createElement('div');
+			div.className = `profile-item ${i === selectedIndex ? 'selected' : ''}`;
 
-        document.getElementById('play-button').disabled = selectedIndex === null;
-    }
+			div.innerHTML = `
+				<span class="dragon-icon">🐉</span>
+				<div style="flex:1; text-align:left;">
+					<strong style="color:#ffff00;">${p.name}</strong><br>
+					<small style="color:#aaffcc;">fb_sig_user: ${p.fb_sig_user.substring(0,10)}...</small>
+				</div>
+				${i === selectedIndex ? '<span style="color:#ffff00; font-size:24px;">✓</span>' : ''}
+				<button onclick="event.stopPropagation(); deleteProfile(${i})"
+						title="Eliminar perfil"
+						style="background:none; border:none; color:#ff5555; font-size:20px; cursor:pointer; padding:0 8px;">
+					🗑
+				</button>
+			`;
+			div.onclick = () => selectProfile(i);
+			list.appendChild(div);
+		});
+
+		document.getElementById('play-button').disabled = selectedIndex === null;
+	}
 
     window.selectProfile = function(i) {
         selectedIndex = i;
         renderProfiles();
     }
 
+	window.deleteProfile = function(i) {
+		pendingDeleteIndex = i;
+		const profile = profiles[i];
+		document.getElementById('delete-modal-text').innerHTML =
+			`¿Eliminar el perfil <strong style="color:#ffff00;">"${profile.name}"</strong>?<br>` +
+			`Esto borrará también su partida guardada si existe.`;
+		document.getElementById('delete-modal').style.display = 'flex';
+	}
+
+	window.cancelDeleteProfile = function() {
+		pendingDeleteIndex = null;
+		document.getElementById('delete-modal').style.display = 'none';
+	}
+
+	window.confirmDeleteProfile = async function() {
+		const i = pendingDeleteIndex;
+		if (i === null) return;
+
+		const profile = profiles[i];
+		document.getElementById('delete-modal').style.display = 'none';
+
+		try {
+			const resp = await fetch('/delete_profile', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ user_id: profile.fb_sig_user })
+			});
+			const result = await resp.json();
+
+			if (result.status === 'ok') {
+				if (result.deleted) {
+					showToast(`🗑️ Perfil y partida guardada de "${profile.name}" eliminados`);
+				} else {
+					showToast(`🗑️ Perfil "${profile.name}" eliminado (no tenía partida guardada)`);
+				}
+			} else {
+				showToast('⚠️ Error al eliminar en el servidor, se eliminará solo localmente', true);
+			}
+		} catch (err) {
+			showToast('⚠️ No se pudo contactar al servidor, se eliminará solo localmente', true);
+		}
+
+		profiles.splice(i, 1);
+
+		if (selectedIndex === i) selectedIndex = profiles.length > 0 ? 0 : null;
+		else if (selectedIndex !== null && selectedIndex > i) selectedIndex--;
+
+		pendingDeleteIndex = null;
+		saveProfiles();
+		renderProfiles();
+	}
+
     window.createNewUser = function() {
         document.getElementById('modal').style.display = 'flex';
-        document.getElementById('player-name').focus();
+        document.getElementById('player_name').focus();
     }
 
     window.hideModal = function() {
         document.getElementById('modal').style.display = 'none';
-        document.getElementById('player-name').value = '';
+        document.getElementById('player_name').value = '';
     }
 
     window.saveNewUser = function() {
-        const name = document.getElementById('player-name').value.trim();
+        const name = document.getElementById('player_name').value.trim();
         if (!name) {
             alert("Por favor ingresa un nombre para el jugador");
             return;
@@ -423,18 +535,20 @@
     }
 
     window.enterGame = function() {
-        if (selectedIndex === null) return;
-        
-        const profile = profiles[selectedIndex];
-        const gameUrl = `index.html?fb_sig_user=${profile.fb_sig_user}&player_name=${encodeURIComponent(profile.name)}`;
-        
-        window.location.href = gameUrl;
-    }
+		if (selectedIndex === null) return;
 
-    // Inicializar
+		const profile = profiles[selectedIndex];
+		const gameUrl = `index.html?fb_sig_user=${profile.fb_sig_user}`
+					  + `&player_name=${encodeURIComponent(profile.name)}`
+					  + `&swf_version=${encodeURIComponent(globalVersion)}`;
+
+		window.location.href = gameUrl;
+	}
+
     window.onload = function() {
         loadProfiles();
         if (profiles.length > 0) selectedIndex = 0;
+		renderVersionSelect();
         renderProfiles();
     };
 </script>
